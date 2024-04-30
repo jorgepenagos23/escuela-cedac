@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AlumnoIndexRequest;
 use App\Models\Alumno;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class AlumnoController extends Controller
 {
@@ -12,6 +13,10 @@ class AlumnoController extends Controller
      * Display a listing of the resource.
      */
 
+    public function alumno(){
+
+        return Inertia::render("Alumnos");
+    }
     public function index(Request $request)
     {
 

@@ -12,6 +12,21 @@ const vuetify = createVuetify({
     ...labsComponents,
   },
   directives,
+
+  theme: {
+    dark: true,
+    themes: {
+      dark: {
+        primary: '#3f51b5',
+        secondary: '#ff4081',
+        accent: '#8c9eff',
+        error: '#b71c1c',
+        warning: '#ffb300',
+        info: '#2196f3',
+        success: '#4caf50'
+      },
+    },
+  },
   icons: {
     defaultSet: 'mdi',
     aliases,

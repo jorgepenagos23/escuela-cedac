@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Diplomado;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class DiplomadoController extends Controller
 {
@@ -20,6 +21,12 @@ class DiplomadoController extends Controller
 
         ]);
 
+    }
+
+
+    public function Diplomado(Request $request){
+
+        return Inertia::render('Diplomados');
     }
 
     /**

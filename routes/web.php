@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\DiplomadoController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +38,11 @@ Route::get('/dashboard', function () {
 Route::get('/estadisticas', function () {
     return Inertia::render('Estadisticas');
 })->middleware(['auth', 'verified'])->name('Estadisticas');
+
+
+
+Route::get('/diplomados', [DiplomadoController::class,'diplomado'])->name('index.diplomado')->middleware('auth');
+Route::get('/alumnos', [AlumnoController::class,'alumno'])->name('vista.alumnos')->middleware('auth');
 
 
 
