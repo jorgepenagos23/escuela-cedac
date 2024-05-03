@@ -2,7 +2,7 @@
     <v-card>
         <v-layout>
 
-            <v-navigation-drawer v-model="drawer" :rail="rail" permanent @click="rail = false" theme="dark">
+            <v-navigation-drawer v-model="drawer" :rail="rail" permanent @click="rail = false" theme="light">
 
                 <v-list-item
                     prepend-avatar="https://scontent.ftgz1-1.fna.fbcdn.net/v/t39.30808-6/428632247_379547098154227_7700167967896374770_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=5f2048&_nc_ohc=QhuAsgNe0oEAb5v6z56&_nc_ht=scontent.ftgz1-1.fna&oh=00_AfDAxBppeSswrZoj5aeH2qsB8dMAowkM1Qdu3NbWNqMJzw&oe=66353C1B"

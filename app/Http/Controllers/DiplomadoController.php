@@ -15,7 +15,7 @@ class DiplomadoController extends Controller
     {
         $diplomado = Diplomado::all();
         return response()->json([
-            'data' => $diplomado,
+            'diplomados' => $diplomado,
             'code' => 200,
            'message' => 'Consulta Exitosa'
 

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\CuentadePagoController;
 use App\Http\Controllers\DiplomadoController;
+use App\Http\Controllers\InscripcionController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UsuariosController;
 use App\Models\CuentadeDeposito;
@@ -27,14 +28,19 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::get('/v1/alumnos_api2024A', [AlumnoController::class, 'index'])->name('alumnos.index')->middleware('auth:sanctum');
-Route::get('/v1/usuarios_api2024B', [UsuariosController::class, 'index'])->middleware('auth:sanctum');
-Route::get('/v1/diplomados_api2024C', [DiplomadoController::class,'index'])->middleware('auth:sanctum');
-Route::get('/v1/cuentadepository_api2024D', [CuentadePagoController::class, 'index'])->middleware('auth:sanctum');
+Route::get('/v1/alumnos_api2024A', [AlumnoController::class, 'index'])->name('alumnos.index');
+
+Route::get('/v1/usuarios_api2024B', [UsuariosController::class, 'index']);
+
+Route::get('/v1/diplomados_api2024C', [DiplomadoController::class,'index']);
+
+
+Route::get('/v1/cuentadepository_api2024D', [CuentadePagoController::class, 'index']);
+Route::get('/v1/inscripciones_api2024E', [InscripcionController::class,'index']);
 
 
 
-
+Route::post('/alumno@create', [AlumnoController::class,'store']);
 
 
 Route::prefix('alumnos')->group( function()

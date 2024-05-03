@@ -4,12 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Pagos;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class PagosController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+
+     public function crudPagos(){
+
+        return Inertia::render('PagosMensualidades');
+     }
     public function index()
     {
         $pagos = Pagos::paginate(10);

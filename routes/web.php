@@ -3,6 +3,8 @@
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\DiplomadoController;
+use App\Http\Controllers\InscripcionController;
+use App\Http\Controllers\PagosController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -41,12 +43,25 @@ Route::get('/estadisticas', function () {
 
 
 
-Route::get('/diplomados', [DiplomadoController::class,'diplomado'])->name('index.diplomado')->middleware('auth');
-Route::get('/alumnos', [AlumnoController::class,'alumno'])->name('vista.alumnos')->middleware('auth');
+
+Route::get('/diplomados', [DiplomadoController::class, 'diplomado'])->name('index.diplomado')->middleware('auth');
+Route::get('/alumnos', [AlumnoController::class, 'alumno'])->name('vista.alumnos')->middleware('auth');
+Route::get('/inscripciones', [InscripcionController::class, 'inscripciones'])->name('vista.inscripciones')->middleware('auth');
+Route::get('/seguimiento/inscripciones', [InscripcionController::class, 'seguimiento_inscripciones'])->name('seguimiento.inscripciones')->middleware('auth');
+
+Route::get('/crud-alumnos', [AlumnoController::class, 'crudalumnos']);    
+
+Route::get('/crud-pagos', [PagosController::class, 'crudPagos']);    
+
+
 
 
 
 //Route::get('/estadisticas', [Controller::class, 'estadisticas']);
+
+
+
+
 
 
 Route::middleware('auth')->group(function () {
@@ -55,4 +70,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
