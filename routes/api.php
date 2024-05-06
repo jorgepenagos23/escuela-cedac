@@ -4,6 +4,7 @@ use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\CuentadePagoController;
 use App\Http\Controllers\DiplomadoController;
 use App\Http\Controllers\InscripcionController;
+use App\Http\Controllers\PagosController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UsuariosController;
 use App\Models\CuentadeDeposito;
@@ -41,6 +42,11 @@ Route::get('/v1/inscripciones_api2024E', [InscripcionController::class,'index'])
 
 
 Route::post('/alumno@create', [AlumnoController::class,'store']);
+
+
+
+Route::get('/v1/pagos_mensualidades_api2024F', [PagosController::class,'index']);
+
 
 
 Route::prefix('alumnos')->group( function()

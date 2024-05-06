@@ -11,16 +11,72 @@ class PagosController extends Controller
     /**
      * Display a listing of the resource.
      */
+    public function vistaResumen(){
+
+        return Inertia::render("Resumen");
+    }
+
+
+     public function vistaPagos(){
+            return Inertia::render("Pagos");
+     }
+
+
+
+
+
 
      public function crudPagos(){
 
         return Inertia::render('PagosMensualidades');
      }
+
+
     public function index()
     {
-        $pagos = Pagos::paginate(10);
-        return response()->json($pagos);
+        $pagos = Pagos::select(
+            'pago_abono.*',
+            'diplomados.nombre as nombre_diplomado',
+            'alumnos.nombre_completo as Nombre',
+            'cuenta_deposito.titular  as Titular',
+            'cuenta_deposito.banco as banco',
+            'cuenta_deposito.numero_cuenta as numero_cuenta'
+
+        )->join('alumnos','alumnos.id','=','pago_abono.alumno_id')
+        ->join('diplomados','pago_abono.diplomado_id','=','diplomados.id')
+        ->join('cuenta_deposito','pago_abono.cuentadeposito','=','cuenta_deposito.id')
+        ->orderBy('pago_abono.fecha_abono','desc')
+        ->get();
+
+
+
+        return response()->json(
+
+            [
+                'PagosconMensualidades'=> $pagos
+            ]);
+
+
+
     }
+
+
+
+
+    public function sumaPagos(){
+
+
+    }
+
+
+
+    public function AlumnosPagosPendientes(){
+
+
+    }
+
+    
+
 
     /**
      * Show the form for creating a new resource.

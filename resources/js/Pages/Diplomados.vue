@@ -5,14 +5,15 @@ import { Head } from "@inertiajs/vue3";
 
 <template>
   <div>
-    <Estadisticas />
     <div class="h-screen">
       <Head title="Cedac" />
       <AuthenticatedLayout>
         <template #header>
           <v-toolbar title="Diplomados" color="indigo">
             <v-toolbar-items>
-              <v-btn>Agregar Diplomado</v-btn>
+              <v-btn
+            
+              >Agregar Diplomado</v-btn>
 
               <v-btn>Editar</v-btn>
             </v-toolbar-items>
@@ -44,9 +45,7 @@ import { Head } from "@inertiajs/vue3";
                   ></v-text-field>
                 </template>
               </v-card>
-              <v-data-table :headers="headers" :items="diplomados" :search="search" class="bg-green-lighten-5
-           
-              ">
+              <v-data-table :headers="headers" :items="diplomados" :search="search" class="bg-grey-lighten-4">
               </v-data-table>
 
             </div>

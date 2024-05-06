@@ -5,7 +5,6 @@ import { Head } from "@inertiajs/vue3";
 
 <template>
     <div>
-        <Estadisticas />
 
         <!-- Contenido de tu vista -->
         <div class="max-w-7xl mx-auto p-6 lg:p-8">
@@ -16,11 +15,11 @@ import { Head } from "@inertiajs/vue3";
                     <v-toolbar title="Inscripciones" color="indigo">
                         <v-toolbar-items>
                           <v-btn>Generar Reporte</v-btn>
-            
+
                         </v-toolbar-items>
-            
+
                         <v-divider class="mx-2" vertical></v-divider>
-            
+
                         <v-btn icon="mdi-dots-vertical"></v-btn>
                       </v-toolbar>
                     <v-container>
@@ -36,7 +35,7 @@ import { Head } from "@inertiajs/vue3";
                                     variant="outlined" hide-details single-line></v-text-field>
                             </template>
                         </v-card>
-                        <v-data-table :headers="headers" :items="alumnos_inscripcion" :search="search">
+                        <v-data-table :headers="headers" :items="alumnos_inscripcion" :search="search" class="bg-green-lighten-5" >
                         </v-data-table>
                     </v-card>
                 </template>

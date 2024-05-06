@@ -13,7 +13,7 @@ const showingNavigationDropdown = ref(false);
 
 <template>
     <div>
-        <div class="h-20 w-100 bg-white " >
+        <div class="h-100 w-100 bg-white " >
             <nav class="bg-white border-b border-gray-100">
                 <!-- Primary Navigation Menu -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -65,9 +65,9 @@ const showingNavigationDropdown = ref(false);
                                     </template>
 
                                     <template #content>
-                                        <DropdownLink :href="route('profile.edit')"> Profile </DropdownLink>
+                                        <DropdownLink :href="route('profile.edit')"> Perfil </DropdownLink>
                                         <DropdownLink :href="route('logout')" method="post" as="button">
-                                            Log Out
+                                            Salir
                                         </DropdownLink>
                                     </template>
                                 </Dropdown>
@@ -128,9 +128,9 @@ const showingNavigationDropdown = ref(false);
                         </div>
 
                         <div class="mt-3 space-y-1">
-                            <ResponsiveNavLink :href="route('profile.edit')"> Profile </ResponsiveNavLink>
+                            <ResponsiveNavLink :href="route('profile.edit')"> Perfil </ResponsiveNavLink>
                             <ResponsiveNavLink :href="route('logout')" method="post" as="button">
-                                Log Out
+                                Salir
                             </ResponsiveNavLink>
                         </div>
                     </div>

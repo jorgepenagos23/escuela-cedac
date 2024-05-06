@@ -53,9 +53,14 @@ class InscripcionController extends Controller
 
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    public function sumaIncripciones(){ 
+   
+   
+    }
+
+
+
+
     public function create()
     {
         //

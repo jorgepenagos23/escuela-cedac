@@ -49,11 +49,16 @@ Route::get('/alumnos', [AlumnoController::class, 'alumno'])->name('vista.alumnos
 Route::get('/inscripciones', [InscripcionController::class, 'inscripciones'])->name('vista.inscripciones')->middleware('auth');
 Route::get('/seguimiento/inscripciones', [InscripcionController::class, 'seguimiento_inscripciones'])->name('seguimiento.inscripciones')->middleware('auth');
 
-Route::get('/crud-alumnos', [AlumnoController::class, 'crudalumnos']);    
+Route::get('/crud-alumnos', [AlumnoController::class, 'crudalumnos']);
 
-Route::get('/crud-pagos', [PagosController::class, 'crudPagos']);    
+Route::get('/crud-pagos', [PagosController::class, 'crudPagos']);
 
 
+Route::get('/mensualidades/pagos',[PagosController::class,'vistaPagos'])->name('vista.pagos')->middleware( 'auth');
+
+
+
+Route::get('/resumen', [PagosController::class,'vistaResumen']);
 
 
 

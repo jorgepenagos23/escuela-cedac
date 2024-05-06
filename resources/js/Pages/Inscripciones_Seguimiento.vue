@@ -5,7 +5,6 @@ import { Head } from "@inertiajs/vue3";
 
 <template>
   <div>
-    <Estadisticas />
     <!-- Contenido de tu vista -->
     <div class="max-w-7xl mx-auto p-6 lg:p-8">
       <Head title="Cedac" />
@@ -84,7 +83,7 @@ import { Head } from "@inertiajs/vue3";
                 variant="solo"
                 class="w-full px-4 py-2"
               ></v-text-field>
-              
+
 
                </div>
                 <div class="mt-2">
@@ -98,7 +97,7 @@ import { Head } from "@inertiajs/vue3";
                   ></v-text-field>
                 </div>
 
-            
+
                 <div class="mt-4">
                   <button
                     class="middle none center mr-4 rounded-lg bg-green-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-green-500/20 transition-all hover:shadow-lg hover:shadow-green-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
@@ -110,7 +109,7 @@ import { Head } from "@inertiajs/vue3";
                     class="middle none center mr-4 rounded-lg bg-red-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-red-500/20 transition-all hover:shadow-lg hover:shadow-red-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
                     data-ripple-light="true"
                   >
-                    Button
+                    Vaciar
                   </button>
                 </div>
               </form>

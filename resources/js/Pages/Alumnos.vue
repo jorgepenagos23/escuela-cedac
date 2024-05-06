@@ -5,7 +5,6 @@ import { Head } from "@inertiajs/vue3";
 
 <template>
     <div>
-        <Estadisticas />
         <!-- Contenido de tu vista -->
         <div class="max-w-7xl mx-auto p-6 lg:p-8">
 
@@ -15,17 +14,17 @@ import { Head } from "@inertiajs/vue3";
                     <v-toolbar title="Alumnos" color="indigo">
                       <v-toolbar-items>
                         <v-btn
-                        
+
                         link href="/crud-alumnos"
                         >Agregar Alumnos</v-btn>
-          
+
                       </v-toolbar-items>
-          
+
                       <v-divider class="mx-2" vertical></v-divider>
-          
+
                       <v-btn icon="mdi-dots-vertical"></v-btn>
                     </v-toolbar>
-          
+
                     <h2 class="font-semibold text-xl text-gray-800 leading-tight"></h2>
                     <v-container>
                       <v-row align="center" justify="center"> </v-row>

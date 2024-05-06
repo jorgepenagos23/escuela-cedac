@@ -5,7 +5,6 @@ import { Head } from "@inertiajs/vue3";
 
 <template>
   <div>
-    <Estadisticas />
     <!-- Contenido de tu vista -->
     <div class="max-w-7xl mx-auto p-6 lg:p-8">
       <Head title="Cedac" />
@@ -13,7 +12,12 @@ import { Head } from "@inertiajs/vue3";
         <template #header>
           <v-toolbar title="Dar de alta Alumnos" color="indigo">
             <v-toolbar-items>
-              <v-btn>Generar Reportes</v-btn>
+
+              <v-btn
+              color="green"
+              prepend-icon="mdi-microsoft-excel"
+              >Subir Excel</v-btn>
+
             </v-toolbar-items>
 
             <v-divider class="mx-2" vertical></v-divider>
@@ -64,12 +68,12 @@ import { Head } from "@inertiajs/vue3";
                     aria-label="Email"
                   />
                 </div>
-               
-              
+
+
                 <div class="inline-block mt-2 -mx-1 pl-1 w-1/2">
                     <label class="block text-sm text-gray-600" for="cus_email">Telefono</label>
 
-                  
+
                   <input
                     class="w-full px-2 py-2 text-gray-700 bg-gray-200 rounded"
                     id="cus_email"
@@ -83,15 +87,15 @@ import { Head } from "@inertiajs/vue3";
 
 
                 <p class="mt-4 text-gray-800 font-medium">Diplomado al que ingresa</p>
-                
-                <div                     class="w-full px-2 py-2 text-gray-700 bg-blue-400 rounded"
+
+                <div                     class="w-full px-2 py-2 text-gray-700 bg-white rounded"
                 >
                   <select id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    <option selected>Choose a country</option>
-                    <option value="US">United States</option>
-                    <option value="CA">Canada</option>
-                    <option value="FR">France</option>
-                    <option value="DE">Germany</option>
+                    <option selected>Elige un diplomado</option>
+                    <option value="US">Diplomado 1 States</option>
+                    <option value="CA">Diplomado 2</option>
+                    <option value="FR">Diplomado 3</option>
+                    <option value="DE">Diplomado 4</option>
                 </select>
 
                 </div>
@@ -106,7 +110,7 @@ import { Head } from "@inertiajs/vue3";
                     class="middle none center mr-4 rounded-lg bg-red-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-red-500/20 transition-all hover:shadow-lg hover:shadow-red-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
                     data-ripple-light="true"
                   >
-                    Button
+                    Vaciar
                   </button>
                 </div>
               </form>
