@@ -1,23 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-
-
-
-
-
-.div-dashboard
-{
+.div-dashboard {
     background-color: #c5e0d3ee;
     height: 40vh;
-    display:flex;
+    display: flex;
     margin-bottom: 40%;
     font-size: larger;
     text-shadow: #fffdfde7;
     justify-content: center;
-
 }
+
 .chart {
     display: flex;
     justify-content: space-between;
@@ -25,30 +18,35 @@
     width: 300px;
     height: 200px;
     border: 1px solid #ccc;
-  }
+}
 
-  .bar {
+.bar {
     width: 20px;
     background-color: blue;
     transition: height 0.5s ease;
-  }
+}
 
-
-  .bar-graph-container {
+.bar-graph-container {
     position: relative;
     height: 100%;
-    width: 30px; /* Ancho de las barras */
-  }
+    width: 30px;
+    /* Ancho de las barras */
+}
 
-  .bar-graph {
+.bar-graph {
     position: absolute;
     bottom: 0;
     width: 100%;
-  }
+}
 
-  /* Ajusta el color y la altura de las barras según sea necesario */
-  /* Aquí es donde especificarías tus estilos de barras */
-  .bar-graph:nth-child(1) {
+
+/* Ajusta el color y la altura de las barras según sea necesario */
+
+
+/* Aquí es donde especificarías tus estilos de barras */
+
+.bar-graph:nth-child(1) {
     background-color: #6e8a90;
-    height: 99.01%; /* Altura de la primera barra */
-  }
+    height: 99.01%;
+    /* Altura de la primera barra */
+}

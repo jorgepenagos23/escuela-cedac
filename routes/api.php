@@ -49,6 +49,30 @@ Route::get('/v1/pagos_mensualidades_api2024F', [PagosController::class,'index'])
 
 
 
+
+
+Route::get('/v1/pagosmensualidatestotal/api2024G', [PagosController::class,'sumaPagos']);
+
+Route::get('/v1/pagosmensualidadespendientes/api2024H', [PagosController::class,'AlumnosAbonosTotalesporPeriodo']); // Fechas
+
+
+
+Route::get('/v1/alumnos/index/2024/nombres', [AlumnoController::class,'index_alumnos']);
+
+Route::get('/v1/diplomados/index/2024/diplomados', [DiplomadoController::class,'index_diplomados']);
+
+Route::get('/v1/inscripciones/recaudacion/suma', [InscripcionController::class,'sumaIncripciones']);
+
+Route::get('/v1/cuentadeposito/index/2024/numero', [CuentadePagoController::class,'index_cuenta']);
+
+
+
+
+
+Route::post('v1/pagosabonos/crear', [PagosController::class,'store']);
+Route::post('v1/inscripcion/crear', [InscripcionController::class,'store']);
+
+
 Route::prefix('alumnos')->group( function()
 {
 });

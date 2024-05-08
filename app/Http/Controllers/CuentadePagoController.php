@@ -10,6 +10,25 @@ class CuentadePagoController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+     public function index_cuenta(){
+        $cuentaDeposito = CuentadeDeposito::all()->map(function ($cuentaDeposito) {
+            // Concatenar el nombre del titular y el número de cuenta
+            $titularConCuenta = $cuentaDeposito->titular . ' - ' . $cuentaDeposito->numero_cuenta;
+
+            return [
+                'id' => $cuentaDeposito->id,
+                'titular' => $titularConCuenta,
+            ];
+        });
+
+        return response()->json([
+            'cuentaDeposito' => $cuentaDeposito
+        ]);
+    }
+
+
+
     public function index()
     {
         $cuentadeposito = CuentadeDeposito::all();

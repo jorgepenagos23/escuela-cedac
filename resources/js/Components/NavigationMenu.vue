@@ -243,9 +243,7 @@
                   <v-card
                     subtitle="Reportes y Estadisticas "
                     title="Estadisticas"
-                    color="teal-darken-4
-
-                                    "
+                    color="  "
                   >
                     <template v-slot:prepend>
                       <v-avatar class="me- mt-2" rounded="0" size="78">

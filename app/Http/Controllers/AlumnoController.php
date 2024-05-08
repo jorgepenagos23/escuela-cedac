@@ -13,6 +13,26 @@ class AlumnoController extends Controller
      * Display a listing of the resource.
      */
 
+
+     public function index_alumnos(){
+
+        $Alumnos = Alumno::select([
+            "nombre_completo",
+            "id",
+        ])->get();
+
+
+        return response()->json(
+        [
+            "Alumnos"=> $Alumnos
+        ]);
+
+
+     }
+
+
+
+
     public function alumno()
     {
 
@@ -42,9 +62,9 @@ class AlumnoController extends Controller
      */
             public function store(Request $request)
             {
-                
+
                 $rules = [
-            
+
                     'nombre_completo' => 'required|string|max:255',
                     'matricula' => 'required|string|max:255',
                     'fecha_nacimiento'=> 'required|date',
@@ -54,15 +74,15 @@ class AlumnoController extends Controller
                     'id_diplomado'=> 'required|integer',
 
                 ];
-                
+
                 $request->validate($rules);
 
                 $alumno = new Alumno();
                 $alumno->nombre_completo = $request->input('nombre_completo');
-                $alumno->matricula = $request->input('matricula');  
+                $alumno->matricula = $request->input('matricula');
                 $alumno->fecha_nacimiento = $request->input('fecha_nacimiento');
-                $alumno->correo = $request->input('correo'); 
-                $alumno->direccion = $request->input('direccion');  
+                $alumno->correo = $request->input('correo');
+                $alumno->direccion = $request->input('direccion');
                 $alumno->telefono = $request->input('telefono');
                 $alumno->id_diplomado =$request->input('id_diplomado');
 

@@ -9,32 +9,117 @@ import { Head } from "@inertiajs/vue3";
     <div class="max-w-11xl mx-auto p-6 lg:p-8">
       <Head title="Cedac" />
       <AuthenticatedLayout>
-        
+      
+
         <template #header>
           <v-toolbar title="Estadisticas" color="indigo">
-            <v-toolbar-items> </v-toolbar-items>
+            <v-toolbar-items>
+
+                <v-dialog max-width="800">
+                    <template v-slot:activator="{ props: activatorProps }">
+                      <v-btn
+                        v-bind="activatorProps"
+                        color="surface-variant"
+                        text="Diplomados "
+                        variant="flat"
+                        prepend-icon=" mdi-coffee-to-go-outline"
+                      ></v-btn>
+                    </template>
+
+                    <template v-slot:default="{ isActive }">
+                      <v-card title=" Consulta de 3 Productos Mas Vendidos">
+                        <v-card-text>
+                        </v-card-text>
+
+                        <v-card-actions>
+                          <v-spacer></v-spacer>
+
+                          <v-btn text="Cerrar Consulta" @click="isActive.value = false"></v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </template>
+                  </v-dialog>
+
+
+                  <v-dialog max-width="800">
+                    <template v-slot:activator="{ props: activatorProps }">
+                      <v-btn
+                        v-bind="activatorProps"
+                        color="surface-variant"
+                        text="Grafica "
+                        variant="flat"
+                        prepend-icon="mdi-chart-box-multiple-outline"
+                      ></v-btn>
+                    </template>
+
+                    <template v-slot:default="{ isActive }">
+                      <v-card title="Consulta por Grafica">
+                        <v-card-text>
+
+                        </v-card-text>
+
+                        <v-card-actions>
+                          <v-spacer></v-spacer>
+
+                          <v-btn text="Cerrar Consulta" @click="isActive.value = false"></v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </template>
+                  </v-dialog>
+
+
+                  <v-dialog max-width="1200">
+                    <template v-slot:activator="{ props: activatorProps }">
+                        <v-btn
+                          v-bind="activatorProps"
+                          color="surface-variant"
+                          text="Consulta por Fechas "
+                          variant="flat"
+                          prepend-icon="mdi-chart-box-multiple-outline"
+                        ></v-btn>
+                      </template>
+
+                      <template v-slot:default="{ isActive }">
+                        <v-card title="Consulta por fechas">
+                          <v-card-text>
+
+                          </v-card-text>
+
+                          <v-card-actions>
+                            <v-spacer></v-spacer>
+
+                            <v-btn text="Cerrar Consulta" @click="isActive.value = false"></v-btn>
+                          </v-card-actions>
+                        </v-card>
+                      </template>
+
+                </v-dialog>
+
+
+            </v-toolbar-items>
 
             <v-divider class="mx-2" vertical></v-divider>
 
             <v-btn icon="mdi-dots-vertical"></v-btn>
           </v-toolbar>
 
-      
+
         </template>
 
-        <div class="max-w-5xl mx-auto p-6 lg:p-8">
-
+        <div class="max-w-7xl mx-auto p-6 lg:p-8">
+        
 
             <v-card>
 
-                <v-toolbar title="Total Inscripciones" color="indigo">
+                <v-toolbar title="Recaudo de  Mensualidades por Diplomado " color="indigo">
                     <v-toolbar-items> </v-toolbar-items>
-        
+
+
                     <v-divider class="mx-2" vertical></v-divider>
-        
+
                     <v-btn icon="mdi-dots-vertical"></v-btn>
                   </v-toolbar>
-        
+
                   <v-container>
                     <div>
                       <!-- Contenedor del segundo gráfico -->
@@ -46,14 +131,14 @@ import { Head } from "@inertiajs/vue3";
 <br><br>
         <v-card>
 
-            <v-toolbar title="Total Mensualidades" color="indigo">
+            <v-toolbar title="Recaudo de Inscripciones por Diplomado" color="indigo">
                 <v-toolbar-items> </v-toolbar-items>
-    
+
                 <v-divider class="mx-2" vertical></v-divider>
-    
+
                 <v-btn icon="mdi-dots-vertical"></v-btn>
               </v-toolbar>
-    
+
               <v-container>
                 <div>
                   <!-- Contenedor del segundo gráfico -->
@@ -62,7 +147,37 @@ import { Head } from "@inertiajs/vue3";
                 </div>
               </v-container>
         </v-card>
+
+        <v-card color="blue " flat>
+            <v-card title="Alumnos Liquidados">
+                <template v-slot:text>
+                    <v-text-field v-model="search" label="Buscar Abonos Netos Alumnos" prepend-inner-icon="mdi-magnify"
+                        variant="outlined" hide-details single-line></v-text-field>
+                </template>
+            </v-card>
+            <v-data-table :headers="headers" :items="pagosAbonosNetos" :search="search" class="bg-teal-darken-4
+
+            " >
+            </v-data-table>
+            
+        </v-card>
+ <v-card color="blue " flat>
+            <v-card title="Alumnos Saldo Pendiente">
+                <template v-slot:text>
+                    <v-text-field v-model="search" label="Buscar Abonos Netos Alumnos" prepend-inner-icon="mdi-magnify"
+                        variant="outlined" hide-details single-line></v-text-field>
+                </template>
+            </v-card>
+            <v-data-table :headers="headersDeudas" :items="pagosPendientesNetos" :search="search" class="bg-red
+
+            " >
+            </v-data-table>
+            
+        </v-card>
+
 </div>
+
+
 
       </AuthenticatedLayout>
     </div>
@@ -70,119 +185,164 @@ import { Head } from "@inertiajs/vue3";
 </template>
 
 <script>
-import axios from "axios";
-import Chart from "chart.js/auto";
+import axios from 'axios';
+import Chart from 'chart.js/auto'; // Importa solo lo necesario de Chart.js
 
 export default {
-  mounted() {
-    // Llama al método para obtener los datos y crear el primer gráfico
-    this.obtenerDiplomados();
-  },
-  methods: {
-    obtenerDiplomados() {
-      axios
-        .get("/api/v1/pagos_mensualidades_api2024F")
-        .then((response) => {
-          this.PagosconMensualidades = response.data.PagosconMensualidades;
-          console.log(response);
-          // Llama a la función para crear el gráfico
-          this.crearGrafico();
-          // Llama al método para crear el segundo gráfico después de asegurarse de que el elemento esté disponible
-          this.crearGrafico2();
+
+    data(){
+return {
+        dialog1:false,
+
+            headers: [
+                {
+                    align: "start",
+                    key: "name",
+                    sortable: false,
+                },
+                { key: "id_Diplomado", title: "Id" },
+                { key: "nombre_completo", title: "Alumno" },
+                { key: "Diplomado", title: "Diplomado" },
+                { key: "TotalFechasAbono", title: "Pagos Realizados" },
+                { key: "FechasAbono", title: "Total Fechas de Pago" },
+                { key: "costo_total", title: "Costo Diplomado" },
+                { key: "TotalPagadoAbono", title: "Total de Abonos" },
+                { key: "monto_inscripcion", title: "Inscripcion" },
+
+
+
+            ],
+            headersDeudas: [
+                {
+                    align: "start",
+                    key: "name",
+                    sortable: false,
+                },
+                { key: "id_Diplomado", title: "Id" },
+                { key: "nombre_completo", title: "Alumno" },
+                { key: "Diplomado", title: "Diplomado" },
+                { key: "TotalFechasAbono", title: "Pagos Pendientes" },
+                { key: "FechasAbono", title: "Total Fechas de Pago" },
+                { key: "costo_total", title: "Costo Diplomado" },
+                { key: "TotalPagadoAbono", title: "Total de Abonos" },
+                { key: "monto_inscripcion", title: "Inscripcion" },
+
+
+
+            ],
+
+            search:"",
+                pagosAbonosNetos:[]
+}
+
+    },
+
+methods:{
+
+    obtenerAlumnos_Abonos_Pagados(){
+
+        axios.get('/api/v1/pagosmensualidadespendientes/api2024H')
+        .then(res => {
+            this.pagosAbonosNetos = res.data.Alumnos_Abonos_Pagados;
+            console.log(res)
         })
-        .catch((err) => {
-          console.error(err);
+        .catch(err => {
+            console.error(err);
+        })
+
+    },
+
+    obtenerSumaInscripcion(){
+        axios.get('/api/v1/inscripciones/recaudacion/suma')
+      .then(response => {
+        const datosProductos = response.data.sumaIncripciones; // Cambiar a response.data.SumaPagos
+
+        // Extraer los nombres de los productos y los totales pagados
+        const nombresProductos = datosProductos.map(producto => producto.nombre_diplomado);
+        const totalesPagados = datosProductos.map(producto => producto.TotalInscripcion);
+
+        // Crear la gráfica de barras
+        const ctx = document.getElementById('miGrafico2').getContext('2d');
+        const miGrafico2 = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: nombresProductos,
+            datasets: [{
+              label: 'Total Pagado por Inscritos',
+              data: totalesPagados,
+              backgroundColor: 'rgba(16, 183, 250)', // Color de fondo de las barras
+        borderColor: 'rgba(75, 192, 192, 1)', // Color del borde de las barras
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              y: {
+                beginAtZero: true // Comenzar el eje y desde cero
+              }
+            }
+          }
         });
-    },
-    // Función para crear el primer gráfico
-    crearGrafico() {
-      const ctx = document.getElementById("miGrafico").getContext("2d");
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: ["Label1", "Label2", "Label3"],
-          datasets: [
-            {
-              label: "Mi Gráfico",
-              data: [10, 20, 30],
-              backgroundColor: [
-                "rgba(206, 16, 16 )",
-                "rgba(39, 109, 240)",
-                "rgba(249, 208, 23)",
-              ],
-              borderColor: [
-                "rgba(255, 99, 132, 1)",
-                "rgba(54, 162, 235, 1)",
-                "rgba(255, 206, 86, 1)",
-              ],
-              borderWidth: 1,
-            },
-          ],
-        },
-        options: {
-          scales: {
-            y: {
-              beginAtZero: true,
-            },
-          },
-        },
+      })
+      .catch(error => {
+        console.error('Error al obtener los datos de la API:', error);
       });
+
     },
-    // Función para crear el segundo gráfico
-    crearGrafico2() {
-      const ctx = document.getElementById("miGrafico2").getContext("2d");
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: ["Label1", "Label2", "Label3"],
-          datasets: [
-            {
-              label: "Mi Segundo Gráfico",
-              data: [15, 25, 35],
-              backgroundColor: [
-                "rgba(206, 16, 16 )",
-                "rgba(39, 109, 240)",
-                "rgba(249, 208, 23)",
-              ],
-              borderColor: [
-                "rgba(255, 99, 132, 1)",
-                "rgba(54, 162, 235, 1)",
-                "rgba(255, 206, 86, 1)",
-              ],
-              borderWidth: 1,
-            },
-          ],
-        },
-        options: {
-          scales: {
-            y: {
-              beginAtZero: true,
-            },
+
+
+},
+
+    created() {
+
+
+        this.obtenerAlumnos_Abonos_Pagados();
+        this.obtenerSumaInscripcion();
+
+  
+
+
+
+    axios.get('api/v1/pagosmensualidatestotal/api2024G')
+      .then(response => {
+        const datosProductos = response.data.SumaPagos; // Cambiar a response.data.SumaPagos
+
+        // Extraer los nombres de los productos y los totales pagados
+        const nombresProductos = datosProductos.map(producto => producto.Diplomado);
+        const totalesPagados = datosProductos.map(producto => producto.TotalPagadoAbono);
+
+        // Crear la gráfica de barras
+        const ctx = document.getElementById('miGrafico').getContext('2d');
+        const miGrafico = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: nombresProductos,
+            datasets: [{
+              label: 'Total Pagado',
+              data: totalesPagados,
+              backgroundColor: 'rgb(88, 214, 141)', // Color de las barras
+              borderColor: 'rgb(252, 7, 7)', // Color del borde de las barras
+              borderWidth: 1
+            }]
           },
-        },
+          options: {
+            scales: {
+              y: {
+                beginAtZero: true // Comenzar el eje y desde cero
+              }
+            }
+          }
+        });
+      })
+      .catch(error => {
+        console.error('Error al obtener los datos de la API:', error);
       });
-    },
-  },
-  data() {
-    return {
-      headers: [
-        { align: "start", key: "name", sortable: false },
-        { key: "Nombre", title: "Alumno" },
-        { key: "monto_abono", title: "Monto Abono" },
-        { key: "fecha_abono", title: "Fecha " },
-        { key: "descripcion", title: "Detalles" },
-        { key: "nombre_diplomado", title: "Diplomado" },
-        { key: "numero_cuenta", title: "No Cuenta" },
-        { key: "Titular", title: "Titular" },
-        { key: "banco", title: "Banco" },
-      ],
-      PagosconMensualidades: [],
-      search: "",
-    };
-  },
+
+  }
+
 };
 </script>
 
-<style scoped>
-/* Estilos específicos para esta vista */
+<style>
+/* Agrega estilos necesarios si es necesario */
 </style>

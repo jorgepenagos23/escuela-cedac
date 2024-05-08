@@ -45,7 +45,7 @@ import { Head } from "@inertiajs/vue3";
                   ></v-text-field>
                 </template>
               </v-card>
-              <v-data-table :headers="headers" :items="diplomados" :search="search" class="bg-grey-lighten-4">
+              <v-data-table :headers="headers" :items="diplomados" :search="search" class="bg-grey-lighten-4 text-justify ">
               </v-data-table>
 
             </div>

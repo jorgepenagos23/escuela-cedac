@@ -11,6 +11,33 @@ class DiplomadoController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+     public function sumaDiplomados(){
+
+
+
+     }
+     
+
+
+     
+
+ public function index_diplomados()
+{
+    $diplomados = Diplomado::all()->map(function ($diplomado) {
+        return [
+            'id' => $diplomado->id,
+            'nombre' => $diplomado->nombre,
+        ];
+    });
+
+    return response()->json([
+        'DiplomadoNombre' => $diplomados
+    ]);
+}
+
+
+
     public function index()
     {
         $diplomado = Diplomado::all();
