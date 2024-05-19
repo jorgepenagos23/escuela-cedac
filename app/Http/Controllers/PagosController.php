@@ -22,7 +22,11 @@ class PagosController extends Controller
             return Inertia::render("Pagos");
      }
 
+     public function vistaPagosAgregar(){
 
+
+        return Inertia::render("AgregarPagosMes");
+     }
 
 
 
@@ -32,21 +36,32 @@ class PagosController extends Controller
         return Inertia::render('PagosMensualidades');
      }
 
+        public function historialAlumno1(){
 
+
+
+        }
     public function index()
     {
         $pagos = Pagos::select(
-            'pago_abono.*',
+            'pagos_colegiatura.*',
             'diplomados.nombre as nombre_diplomado',
-            'alumnos.nombre_completo as Nombre',
             'cuenta_deposito.titular  as Titular',
             'cuenta_deposito.banco as banco',
-            'cuenta_deposito.numero_cuenta as numero_cuenta'
+            'cuenta_deposito.numero_cuenta as numero_cuenta',
+            'cuenta_deposito.CLABE as CLABE',
+            'alumno_inscripcion.nombre_alumno as Nombre',
+            'alumno_inscripcion.saldo as saldo',
 
-        )->join('alumnos','alumnos.id','=','pago_abono.alumno_id')
-        ->join('diplomados','pago_abono.diplomado_id','=','diplomados.id')
-        ->join('cuenta_deposito','pago_abono.cuentadeposito','=','cuenta_deposito.id')
-        ->orderBy('pago_abono.fecha_abono','desc')
+            'users.name as Tutor',
+)
+        ->join('diplomados','pagos_colegiatura.diplomado_id','=','diplomados.id')
+        ->join('cuenta_deposito','pagos_colegiatura.cuentadeposito','=','cuenta_deposito.id')
+        ->join('alumno_inscripcion','alumno_inscripcion.id','=','pagos_colegiatura.alumno_id')
+        ->join('users','users.id','=','pagos_colegiatura.tutor')
+        ->where('alumno_inscripcion.saldo', '>', 0)
+        ->where('pagos_colegiatura.status', 'activo')
+        ->orderBy('pagos_colegiatura.Fecha_PrimerContacto','asc')
         ->get();
 
 
@@ -65,14 +80,14 @@ class PagosController extends Controller
             public function sumaPagos(){
 
                 $SumaPagos = Pagos::select(
-                    "pago_abono.fecha_abono as FechaAbono",
+                    "pagos_colegiatura.Fecha_PrimerContacto as FechaAbono",
                     "diplomados.id as id_Diplomado",
                     "diplomados.nombre as Diplomado",
 
-                    DB::raw('SUM(pago_abono.monto_abono) as TotalPagadoAbono'),
+                    DB::raw('SUM(pagos_colegiatura.pago_colegiatura) as TotalPagadoAbono'),
                 )
-                ->join("diplomados", "diplomados.id", "=", "pago_abono.diplomado_id")
-                ->groupBy( "pago_abono.fecha_abono", "diplomados.id")
+                ->join("diplomados", "diplomados.id", "=", "pagos_colegiatura.diplomado_id")
+                ->groupBy( "pagos_colegiatura.Fecha_PrimerContacto", "diplomados.id")
                 ->orderByDesc('TotalPagadoAbono')
                 ->get();
 
@@ -91,22 +106,22 @@ class PagosController extends Controller
                 $AlumnosPagosPendientes = Pagos::select(
                     "diplomados.id as id_Diplomado",
                     "diplomados.nombre as Diplomado",
-                    "alumnos.id as idAlumno",
-                    "alumnos.nombre_completo",
-                    DB::raw('COUNT(pago_abono.fecha_abono) as TotalFechasAbono'), // Contar el número de fechas
-                    DB::raw('GROUP_CONCAT(pago_abono.fecha_abono) as FechasAbono'),
-                    DB::raw('SUM(pago_abono.monto_abono) as TotalPagadoAbono'),
+                    DB::raw('COUNT(pagos_colegiatura.Fecha_PrimerContacto) as TotaldePagos'), // Contar el número de fechas
+                    DB::raw('GROUP_CONCAT(pagos_colegiatura.pago_colegiatura) as FechasColegiaturas'),
+                    DB::raw('GROUP_CONCAT(pagos_colegiatura.Fecha_PrimerContacto) as Fecha'),
                     'diplomados.costo_total', // Obtener el precio del diplomado sin raw
-                    'pago_inscripcion.monto_inscripcion' // Obtener el monto de inscripción
+                    'alumno_inscripcion.monto_inscripcion',
+                    DB::raw('SUM(pagos_colegiatura.pago_colegiatura) as Totalpago_colegiatura'),
+                    'alumno_inscripcion.saldo as Saldo Pendiente',
+                    'alumno_inscripcion.nombre_alumno' // Obtener el nombre del alumno
                 )
-                ->join("diplomados", "diplomados.id", "=", "pago_abono.diplomado_id")
-                ->join("alumnos", "alumnos.id", "=", "pago_abono.alumno_id")
-                ->join("pago_inscripcion", function ($join) {
-                    $join->on("pago_inscripcion.alumno_id", "=", "alumnos.id")
-                         ->on("pago_inscripcion.diplomado_id", "=", "diplomados.id");
-                }) // Realizar la unión con la tabla pago_inscripcion
-                ->groupBy("diplomados.id", "alumnos.id", "pago_inscripcion.monto_inscripcion") // Agrupar por ID de alumno y monto de inscripción
-                ->orderByDesc('TotalPagadoAbono')
+                ->join("diplomados", "diplomados.id", "=", "pagos_colegiatura.diplomado_id")
+                ->join("alumno_inscripcion", function ($join) {
+                    $join->on("alumno_inscripcion.diplomado_id", "=", "diplomados.id")
+                         ->on("alumno_inscripcion.id", "=", "pagos_colegiatura.alumno_id"); // Agregar unión con la tabla alumno_inscripcion
+                })
+                ->groupBy("diplomados.id", "alumno_inscripcion.monto_inscripcion", "alumno_inscripcion.nombre_alumno", 'alumno_inscripcion.saldo') // Agrupar por ID de diplomado, monto de inscripción y nombre del alumno
+                ->orderByDesc('Totalpago_colegiatura')
                 ->get();
 
                 // Convertir el campo costo_total a formato numérico sin decimales
@@ -121,14 +136,6 @@ class PagosController extends Controller
 
 
             }
-
-
-
-
-
-
-
-
 
 
     /**
@@ -155,9 +162,8 @@ class PagosController extends Controller
 
             $pago = new Pagos();
 
-            $pago->descripcion = $request->input('descripcion');
-            $pago->fecha_abono = $request->input('fecha_abono');
-            $pago->monto_abono = $request ->input('monto_abono');
+            $pago->Fecha_PrimerContacto = $request->input('Fecha_PrimerContacto');
+            $pago->pago_colegiatura = $request ->input('pago_colegiatura');
             $pago->cuentadeposito = $request ->input('cuentadeposito');
             $pago->diplomado_id = $request ->input('diplomado_id');
             $pago->alumno_id = $request ->input('alumno_id');
@@ -184,14 +190,95 @@ class PagosController extends Controller
 
     }
 
+    public function directorio(Request $request) {
+        $AlumnosEstadoPagar = Pagos::select(
+                'alumno_inscripcion.id as alumno_id',
+                'alumno_inscripcion.nombre_alumno as nombre_completo',
+                'alumno_inscripcion.saldo as Pendiente_Pagar',
+                'alumno_inscripcion.fecha_inscripcion as fecha_inscripcion',
+                'alumno_inscripcion.monto_inscripcion as monto_inscripcion',
+                'alumno_inscripcion.grupo_campa as grupo_campa',
+                'grupo_campañas.campaña as campaña',
+                'grupo_campañas.grupo as grupo',
+                'diplomados.nombre as nombre_diplomado',
+                'diplomados.id as diplomado_id',
+
+                'cuenta_deposito.titular as Titular',
+                'cuenta_deposito.banco as banco',
+                'cuenta_deposito.numero_cuenta as numero_cuenta',
+                'cuenta_deposito.CLABE as CLABE',
+                'users.name as Tutor',
+                'tutores.name as Asesor'
+            )
+            ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
+            ->join('users', 'users.id', '=', 'alumno_inscripcion.tutor')
+            ->join('users as tutores', 'tutores.id', '=', 'alumno_inscripcion.asesor')
+            ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
+            ->join('grupo_campañas', 'grupo_campañas.id', '=', 'alumno_inscripcion.grupo_campa')
+            ->join('cuenta_deposito', 'alumno_inscripcion.cuentadeposito', '=', 'cuenta_deposito.id')
+            ->where('alumno_inscripcion.saldo', '>', 0)
+            ->groupBy(
+                'alumno_inscripcion.id',
+                'alumno_inscripcion.nombre_alumno',
+                'alumno_inscripcion.saldo',
+                'alumno_inscripcion.fecha_inscripcion',
+                'alumno_inscripcion.grupo_campa',
+                'grupo_campañas.campaña',
+                'grupo_campañas.grupo',
+                'diplomados.nombre',
+                'cuenta_deposito.titular',
+                'cuenta_deposito.banco',
+                'cuenta_deposito.numero_cuenta',
+                'cuenta_deposito.CLABE',
+                'users.name',
+                'tutores.name'
+            )
+            ->get();
+
+        return response()->json([
+            'AlumnosEstadoPagar' => $AlumnosEstadoPagar,
+            'mesagge' => 'Exito en consulta',
+            'code' => 200,
+        ]);
+    }
 
     /**
-     * Display the specified resource.
+     * Display
+     *the specified resource.
      */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $pago = Pagos::select(
+                'pagos_colegiatura.id as idpago',
+                'pagos_colegiatura.alumno_id',
+                'pagos_colegiatura.Fecha_PrimerContacto',
+                'pagos_colegiatura.pago_colegiatura',
+                'pagos_colegiatura.diplomado_id as diplomado_id',
+
+                'cuenta_deposito.titular as Titular',
+                'cuenta_deposito.banco as banco',
+                'cuenta_deposito.numero_cuenta as numero_cuenta',
+                'cuenta_deposito.CLABE as CLABE',
+                'alumno_inscripcion.nombre_alumno as nombre_completo',
+                'users.name as Tutor',
+                'tutores.name as Asesor',
+                'diplomados.nombre as nombre_diplomado'
+            )
+            ->join('diplomados', 'diplomados.id', '=', 'pagos_colegiatura.diplomado_id')
+
+            ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
+            ->join('cuenta_deposito', 'pagos_colegiatura.cuentadeposito', '=', 'cuenta_deposito.id')
+            ->join('users', 'users.id', '=', 'alumno_inscripcion.tutor')
+            ->join('users as tutores', 'tutores.id', '=', 'alumno_inscripcion.asesor')
+            ->where('pagos_colegiatura.alumno_id', $id)
+            ->orderBy('pagos_colegiatura.Fecha_PrimerContacto', 'desc')
+            ->get();
+
+        return response()->json([
+            'pagosColegiaturaAlumno2' => $pago
+        ]);
     }
+
 
     /**
      * Show the form for editing the specified resource.

@@ -1,17 +1,32 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
+const customFilter = (items, search) => {
+  if (!search.trim()) return items;
+
+  const normalizedSearch = search.toLowerCase();
+
+  return items.filter(item => {
+    // Aquí puedes personalizar qué campos quieres buscar en tus elementos
+    return Object.values(item).some(value => {
+      if (typeof value === 'string') {
+        return value.toLowerCase().includes(normalizedSearch);
+      }
+      return false;
+    });
+  });
+};
+
 </script>
 
 <template>
-    <div>
+    <div class="watermark-container">
+
 
         <!-- Contenido de tu vista -->
-        <div class="max-w-7xl mx-auto p-6 lg:p-8">
+        <div class="max-w-9xl mx-auto p-6 lg:p-8">
 
             <Head title="Cedac" />
-            <AuthenticatedLayout>
-                <template #header>
                     <v-toolbar title="Inscripciones" color="indigo">
                         <v-toolbar-items>
                           <v-btn>Generar Reporte</v-btn>
@@ -35,17 +50,30 @@ import { Head } from "@inertiajs/vue3";
                                     variant="outlined" hide-details single-line></v-text-field>
                             </template>
                         </v-card>
-                        <v-data-table :headers="headers" :items="alumnos_inscripcion" :search="search" class="bg-green-lighten-5" >
-                        </v-data-table>
+                        <v-data-table
+                        :headers="headers"
+                        :items="alumnos_inscripcion"
+                        :search="search"
+                        class="bg-white"
+                        :header-props="{ class: 'custom-header' }"
+                        :item-props="{ class: 'custom-cell' }"
+                      >
+                      </v-data-table>
                     </v-card>
-                </template>
 
 
-            </AuthenticatedLayout>
         </div>
     </div>
 </template>
 <style>
+.custom-header {
+    background-color: rgb(211, 255, 12); /* Color de fondo del encabezado */
+    color: rgb(0, 0, 0); /* Color del texto del encabezado */
+  }
+
+  .custom-cell {
+    background-color: lightblue; /* Color de fondo de las celdas */
+  }
 .mycard {
     /* width: 1400px; Eliminado */
     justify-content: center;
@@ -58,6 +86,7 @@ import { Head } from "@inertiajs/vue3";
     background-color: rgba(255, 255, 255, 0.9);
     z-index: -2;
 }
+
 </style>
 <script>
 import Estadisticas from "./Estadisticas.vue";
@@ -100,12 +129,23 @@ export default {
                     key: "name",
                     sortable: false,
                 },
-                { key: "alumno_nombre", title: "Nombre del Alumno" },
-                { key: "monto_inscripcion", title: "Inscripcion" },
-                { key: "nombre_diplomado", title: "Diplomado" },
-                { key: "fecha_inscripcion", title: "Fecha Inscripcion" },
-                { key: "Titular", title: "Titular" },
-                { key: "banco", title: "Banco" },
+
+                { key: "nombre_alumno", title: "NOMBRE DEL ALUMNO" },
+                { key: "celular", title: "CELULAR" },
+                {key:  "adicional", title: "CELULAR ADICIONAL"},
+                { key:"nombre_diplomado" , title:"DIPLOMADO" },
+                {key: "Asesor", title:"ASESOR"},
+                { key: "Tutor" ,title: "TUTOR"},
+                { key: "fecha_inscripcion" ,title: "FECHA DE INSCRIPCION"},
+                {key:  "fecha_primer_pago_colegiatura" , title:"PRIMER PAGO DE COLEGIATURA"},
+                { key: "banco" ,title: "Banco"},
+                { key: "numero_cuenta" ,title: "No Cuenta"},
+                { key: "CLABE" ,title: "CLABE"},
+                { key: "Titular" ,title: "Titular"},
+                {key:  "saldo" , title:"Saldo"}
+
+
+
 
 
             ],
@@ -120,5 +160,16 @@ export default {
 </script>
 
 <style scoped>
-/* Estilos específicos para esta vista */
+.watermark-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/public/images/des6.jpg'); /* Reemplaza con la ruta real de tu logo */
+    background-repeat: repeat;
+    background-position: top left;
+    z-index: -1; /* Asegura que el pseudo-elemento esté detrás del contenido */
+}
 </style>

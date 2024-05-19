@@ -11,24 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pago_inscripcion', function (Blueprint $table) {
+        Schema::create('pagos_colegiatura', function (Blueprint $table) {
             $table->id();
-            $table->date('fecha_inscripcion');
-            $table->text('descripcion')->nulleable();
-            $table->decimal('monto_total',10,2)->default(7000.00); 
-            $table->decimal('monto_inscripcion',10,2)->default(600.00)->nulleable();
 
+            $table->date('Fecha_PrimerContacto');
+            $table->decimal('pago_colegiatura', 10, 2)->default(1600.00);
+            $table->string('status')->default('activo');
+            $table->unsignedBigInteger('tutor')->default(3)->nullable();
+
+            $table->unsignedBigInteger('alumno_id');
             $table->unsignedBigInteger('cuentadeposito');
             $table->unsignedBigInteger('diplomado_id');
-            $table->unsignedBigInteger('alumno_id');
-
 
             $table->foreign('cuentadeposito')->references('id')->on('cuenta_deposito')->onDelete('cascade');
+            $table->foreign('alumno_id')->references('id')->on('alumno_inscripcion')->onDelete('cascade');
             $table->foreign('diplomado_id')->references('id')->on('diplomados')->onDelete('cascade');
-            $table->foreign('alumno_id')->references('id')->on('alumnos')->onDelete('cascade');
+            $table->foreign('tutor')->references('id')->on('users')->onDelete('cascade');
 
-
-            $table->timestamps('');
+            $table->timestamps();
         });
     }
 
@@ -37,6 +37,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pago_inscripcion');
+        Schema::dropIfExists('pago_abono');
     }
 };

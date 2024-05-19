@@ -12,11 +12,13 @@ class Diplomado extends Model
     protected $fillable = [
         'id',
         'nombre',
-        'descripcion',
         'duracion_mes',
         'requisitos',
         'costo_total',
-        
-    ];
 
+    ];
+    public function grupoCampañas()
+    {
+        return $this->hasMany(GrupoCampaña::class, 'diplomado_id', 'id');
+    }
 }

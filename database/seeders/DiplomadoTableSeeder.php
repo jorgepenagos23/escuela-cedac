@@ -20,10 +20,6 @@ class DiplomadoTableSeeder extends Seeder
         foreach(range(1,10)as $index){
         \App\Models\Diplomado::create([
             'nombre' => $faker->sentence(2),
-            'descripcion' => $faker->paragraph,
-            'duracion_mes'=>$faker->numberBetween(1,7),
-            'requisitos'=>$faker->paragraph,
-            'costo_total'=>$faker->randomFloat(6,7000),
         ]);
 
 

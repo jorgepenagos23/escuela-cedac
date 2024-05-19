@@ -86,22 +86,23 @@ defineProps({
           <section>
             <h1 class="text-3xl font-bold text-gray-600 mb-10">Diplomados</h1>
             <div class="grid sm:grid-cols-3 gap-4 grid-cols-2">
-              <div>
-                <div class="bg-gray-300 h-80" style="background-image: url('https://scontent.ftgz1-2.fna.fbcdn.net/v/t39.30808-6/439015288_416664924442444_625007343669538073_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=5f2048&_nc_eui2=AeG-2Tt552bL-sqhXQzQKdEwOVM-8OAZq2s5Uz7w4Bmra6WIqvPth1TOm_ckaog1J6_61StpYabRCM0OE9CD-uRh&_nc_ohc=gEyh40Ypwd8Q7kNvgFzWPLz&_nc_ht=scontent.ftgz1-2.fna&oh=00_AfBL78mbWAXlm45GPHajvSohUQq63gJ5tuu7GRs70s771Q&oe=663FA869'); background-size: 100%;"></div>
-                <h3 class="text-lg font-semibold text-gray-500 mt-2" style="text-justify: ">
-                  𝐃𝐈𝐏𝐋𝐎𝐌𝐀𝐃𝐎 𝐄𝐍 𝐄𝐒𝐓𝐑𝐀𝐓𝐄𝐆𝐈𝐀𝐒 𝐃𝐄 𝐋𝐈𝐓𝐈𝐆𝐀𝐂𝐈𝐎́𝐍 𝐄𝐍 𝐋𝐀 𝐑𝐄𝐅𝐎𝐑𝐌𝐀 𝐋𝐀𝐁𝐎𝐑𝐀𝐋
+                <div>
+                    <img src="./../../../public/images/diplo1.jpg" alt="Descripción de la imagen">
+                    <h3 class="text-lg font-semibold text-gray-500 mt-2" style="text-justify: ">
+                        𝐃𝐈𝐏𝐋𝐎𝐌𝐀𝐃𝐎 𝐄𝐍 𝐄𝐒𝐓𝐑𝐀𝐓𝐄𝐆𝐈𝐀𝐒 𝐃𝐄 𝐋𝐈𝐓𝐈𝐆𝐀𝐂𝐈𝐎́𝐍 𝐄𝐍 𝐋𝐀 𝐑𝐄𝐅𝐎𝐑𝐌𝐀 𝐋𝐀𝐁𝐎𝐑𝐀𝐋
+                        <span class="text-gray-700"></span>
+                    </h3>
+                </div>
 
-                    <span class="text-gray-700"></span></h3>
-
-              </div>
               <div>
-                <div class="bg-gray-300 h-80" style="background-image: url('https://scontent.ftgz1-1.fna.fbcdn.net/v/t39.30808-6/439015363_416664524442484_1479507299115418737_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=5f2048&_nc_eui2=AeE8TIk79M0yF_qqpLQhOaR8svcgmnS0ja6y9yCadLSNrv7qHYhHnxx4i1YP1YlqblozggGsFQnO0pS6jlJb6QDg&_nc_ohc=fBszOKZ8FWoQ7kNvgH9i9Bj&_nc_ht=scontent.ftgz1-1.fna&oh=00_AfBja07ZkevWKqmu_dwvqligO-xkounDHVQ7q0z1GvgC7w&oe=663F8963'); background-size: 100%;"></div>
+                <img src="./../../../public/images/diplo2.jpg" alt="Descripción de la imagen">
+
                 <h3 class="text-lg font-semibold text-gray-500 mt-2">
                     𝐃𝐈𝐏𝐋𝐎𝐌𝐀𝐃𝐎 𝐄𝐍 𝐒𝐀𝐋𝐔𝐃 𝐏𝐔́𝐁𝐋𝐈𝐂𝐀 𝐘 𝐄𝐏𝐈𝐃𝐄𝐌𝐈𝐎𝐋𝐎𝐆𝐈́𝐀
                     <span class="text-gray-700"></span></h3>
               </div>
               <div>
-                <div class="bg-gray-300 h-80" style="background-image: url('https://scontent.ftgz1-2.fna.fbcdn.net/v/t39.30808-6/439044185_416664141109189_2800529667337489035_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=5f2048&_nc_eui2=AeGBRnsmYxnQ8v0VrIkLYRMnwBxXLpICmJXAHFcukgKYlalc4Y7siUmUG2wjIDDpgZF8SolaIFe2YFYdhyvqVNpV&_nc_ohc=JTAPh4bw34YQ7kNvgG_cNqj&_nc_ht=scontent.ftgz1-2.fna&oh=00_AfAexhsweWVlVdX39tfrh049azCA2Z5g0kK3xSh_9UFj1g&oe=663FA544'); background-size: 100%;"></div>
+                <img src="./../../../public/images/diplo3.jpg" alt="Descripción de la imagen">
                 <h3 class="text-lg font-semibold text-gray-500 mt-2">
                     𝐃𝐈𝐏𝐋𝐎𝐌𝐀𝐃𝐎 𝐄𝐍 𝐃𝐈𝐒𝐄𝐍̃𝐎 𝐂𝐔𝐑𝐑𝐈𝐂𝐔𝐋𝐀𝐑 𝐘 𝐀𝐂𝐑𝐄𝐃𝐈𝐓𝐀𝐂𝐈𝐎́𝐍 𝐃𝐄 𝐏𝐑𝐎𝐆𝐑𝐀𝐌𝐀𝐒 𝐃𝐄 𝐒𝐀𝐋𝐔𝐃
 

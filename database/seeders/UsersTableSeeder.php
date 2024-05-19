@@ -17,13 +17,13 @@ class UsersTableSeeder extends Seeder
     {
         $faker = Faker::create();
 
-        foreach(range(1,200) as $index){
+        foreach(range(1,10) as $index){
         \App\Models\User::create([
             'name' =>$faker->name,
             'email'=>$faker->unique()->safeEmail,
             'email_verified_at' => now(),
             'password' =>Hash::make('password'),
-            'role' =>$faker->randomElement(['admin','tutoria','admisiones','otro']),
+            'role' =>$faker->randomElement(['admin','tutoria','admisiones','asesor']),
             'telefono' =>$faker->phoneNumber,
             'remember_token'=>Str::random(10),
 
@@ -34,5 +34,5 @@ class UsersTableSeeder extends Seeder
 
 
     }
-    
+
 }

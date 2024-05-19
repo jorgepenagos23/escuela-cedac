@@ -13,7 +13,13 @@ return new class extends Migration
     {
         Schema::create('cuenta_pago', function (Blueprint $table) {
             $table->id();
-        
+
+            $table->decimal('total_colegiaturas');
+            $table->string('Liquidacion');
+           $table->unsignedBigInteger('idColegiatatura');
+           $table->foreign('idColegiatatura')->references('id')->on('pagos_colegiatura')->onDelete('cascade');
+
+
             $table->timestamps();
         });
     }

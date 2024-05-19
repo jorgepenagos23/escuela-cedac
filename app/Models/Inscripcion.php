@@ -10,19 +10,23 @@ class Inscripcion extends Model
     use HasFactory;
 
 
-    protected $table ='pago_inscripcion';
+    protected $table ='alumno_inscripcion';
 
     protected $fillable =[
 
     'id',
     'fecha_inscripcion',
-    'descripcion',
-    'monto_total',
+    'saldo',
     'monto_inscripcion',
+    'nombre_alumno',
+    'celular',
+    'adicional',
+    'asesor',
+    'tutor',
+    'grupo_campa',
     'cuentadeposito',
     'diplomado_id',
-    'alumno_id',
-
+    'fecha_primer_pago_colegiatura',
     ];
 
     protected static function boot()
@@ -34,11 +38,11 @@ class Inscripcion extends Model
             $precio_diplomado = $diplomado->costo_total;
 
             // Establecer el monto total igual al precio del diplomado
-            $inscripcion->monto_total = $precio_diplomado;
+            $inscripcion->saldo = $precio_diplomado;
 
             $comision=2;
             // Restar el monto de la inscripción al monto total
-            $inscripcion->monto_total -= $inscripcion->monto_inscripcion;
+            $inscripcion->saldo -= $inscripcion->monto_inscripcion;
         });
     }
 

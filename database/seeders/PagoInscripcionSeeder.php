@@ -13,7 +13,7 @@ class PagoInscripcionSeeder extends Seeder
      */
     public function run(): void
     {
-        
+
         $faker = Faker::create();
 
         $alumnoID=1;
@@ -21,13 +21,12 @@ class PagoInscripcionSeeder extends Seeder
 
         \App\Models\Inscripcion::create([
             'fecha_inscripcion' =>$faker->date,
-            'descripcion'=>$faker->paragraph,
             'monto_total'=>7000.00,
             'monto_inscripcion'=>600.00,
             'cuentadeposito'=>$faker->numberBetween(1,4),
             'diplomado_id'=>$faker->numberBetween(1,10),
             'alumno_id'=>$alumnoID++,
-        
+
         ]);
 
         }

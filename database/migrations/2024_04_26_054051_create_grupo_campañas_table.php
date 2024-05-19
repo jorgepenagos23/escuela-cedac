@@ -11,8 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cuenta_abono', function (Blueprint $table) {
+        Schema::create('grupo_campañas', function (Blueprint $table) {
             $table->id();
+            $table->string('campaña')->nulleable();
+            $table->string('grupo')->nulleable();
+            $table->unsignedBigInteger('id_diplomado')->nullable();
+            $table->foreign('id_diplomado')->references('id')->on('diplomados')->onDelete('cascade');
+
+
             $table->timestamps();
         });
     }
@@ -22,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cuenta_abono');
+        Schema::dropIfExists('grupo_campañas');
     }
 };

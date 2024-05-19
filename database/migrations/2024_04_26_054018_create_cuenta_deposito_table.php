@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('CLABE')->nulleable();
             $table->string('numero_cuenta')->nullable();
             $table->string('titular')->default('CEDAC');
-            $table->enum('banco',['BBVA','AZTECA','SANTANDER','OXXO'])->default('BBVA');
-            
+            $table->enum('banco',['BBVA','AZTECA','SANTANDER','SPIN',])->default('BBVA');
+
             $table->timestamps();
         });
     }

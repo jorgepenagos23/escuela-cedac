@@ -14,9 +14,7 @@ return new class extends Migration
         Schema::create('diplomados', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
-            $table->text('descripcion')->nulleable();
             $table->integer('duracion_mes')->default('7');
-            $table->text('requisitos')->nulleable();
             $table->decimal('costo_total',10,2)->default(7000.00);
             $table->timestamps();
         });

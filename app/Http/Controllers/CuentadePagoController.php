@@ -16,9 +16,17 @@ class CuentadePagoController extends Controller
             // Concatenar el nombre del titular y el número de cuenta
             $titularConCuenta = $cuentaDeposito->titular . ' - ' . $cuentaDeposito->numero_cuenta;
 
+
+            $titularConCuentaCLABE = '';
+            // Verificar si la CLABE está presente antes de concatenarla
+            if (!empty($cuentaDeposito->CLABE)) {
+                $titularConCuentaCLABE =  $cuentaDeposito->CLABE;
+            }
+
             return [
                 'id' => $cuentaDeposito->id,
                 'titular' => $titularConCuenta,
+                'CLABE' => $titularConCuentaCLABE,
             ];
         });
 
@@ -26,6 +34,7 @@ class CuentadePagoController extends Controller
             'cuentaDeposito' => $cuentaDeposito
         ]);
     }
+
 
 
 

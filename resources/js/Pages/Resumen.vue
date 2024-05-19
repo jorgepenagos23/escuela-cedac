@@ -9,7 +9,7 @@ import { Head } from "@inertiajs/vue3";
     <div class="max-w-11xl mx-auto p-6 lg:p-8">
       <Head title="Cedac" />
       <AuthenticatedLayout>
-      
+
 
         <template #header>
           <v-toolbar title="Estadisticas" color="indigo">
@@ -107,7 +107,7 @@ import { Head } from "@inertiajs/vue3";
         </template>
 
         <div class="max-w-7xl mx-auto p-6 lg:p-8">
-        
+
 
             <v-card>
 
@@ -149,17 +149,20 @@ import { Head } from "@inertiajs/vue3";
         </v-card>
 
         <v-card color="blue " flat>
-            <v-card title="Alumnos Liquidados">
+            <v-card title="Alumnos con Pagos Colegiaturas">
                 <template v-slot:text>
                     <v-text-field v-model="search" label="Buscar Abonos Netos Alumnos" prepend-inner-icon="mdi-magnify"
                         variant="outlined" hide-details single-line></v-text-field>
                 </template>
             </v-card>
-            <v-data-table :headers="headers" :items="pagosAbonosNetos" :search="search" class="bg-teal-darken-4
+            <v-data-table :headers="headers" :items="pagosAbonosNetos" :search="search" class="bg-white "
+            :header-props="{ class: 'custom-header' }"
 
-            " >
+
+
+            >
             </v-data-table>
-            
+
         </v-card>
  <v-card color="blue " flat>
             <v-card title="Alumnos Saldo Pendiente">
@@ -168,11 +171,13 @@ import { Head } from "@inertiajs/vue3";
                         variant="outlined" hide-details single-line></v-text-field>
                 </template>
             </v-card>
-            <v-data-table :headers="headersDeudas" :items="pagosPendientesNetos" :search="search" class="bg-red
+            <v-data-table :headers="headersDeudas" :items="pagosPendientesNetos" :search="search" class="bg-red"
 
-            " >
+
+
+           >
             </v-data-table>
-            
+
         </v-card>
 
 </div>
@@ -183,7 +188,16 @@ import { Head } from "@inertiajs/vue3";
     </div>
   </div>
 </template>
-
+<style>
+.custom-header {
+    background-color: rgb(0, 184, 18); /* Color de fondo del encabezado */
+    color: rgb(248, 248, 248); /* Color del texto del encabezado */
+  }
+  .custom-header-pendiente {
+    background-color: rgb(253, 29, 29); /* Color de fondo del encabezado */
+    color: rgb(255, 249, 249); /* Color del texto del encabezado */
+  }
+</style>
 <script>
 import axios from 'axios';
 import Chart from 'chart.js/auto'; // Importa solo lo necesario de Chart.js
@@ -200,14 +214,15 @@ return {
                     key: "name",
                     sortable: false,
                 },
-                { key: "id_Diplomado", title: "Id" },
-                { key: "nombre_completo", title: "Alumno" },
+                { key: "nombre_alumno", title: "Alumno" },
                 { key: "Diplomado", title: "Diplomado" },
-                { key: "TotalFechasAbono", title: "Pagos Realizados" },
-                { key: "FechasAbono", title: "Total Fechas de Pago" },
+                { key: "TotaldePagos", title: "Colegiaturas Realizadas" },
+                { key: "FechasColegiaturas", title: "Colegiaturas" },
+                { key: "Fecha", title: "Fechas de Pago Colegiaturas" },
                 { key: "costo_total", title: "Costo Diplomado" },
-                { key: "TotalPagadoAbono", title: "Total de Abonos" },
+                { key: "Saldo Pendiente", title: "Saldo Pendiente por pagar" },
                 { key: "monto_inscripcion", title: "Inscripcion" },
+
 
 
 
@@ -299,7 +314,7 @@ methods:{
         this.obtenerAlumnos_Abonos_Pagados();
         this.obtenerSumaInscripcion();
 
-  
+
 
 
 

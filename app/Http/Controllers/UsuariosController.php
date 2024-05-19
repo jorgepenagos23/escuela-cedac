@@ -11,6 +11,12 @@ class UsuariosController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+
+     public function listarUsuarios(Request $request){
+
+
+     }
     public function index()
     {
 

@@ -64,7 +64,7 @@ Route::get('/resumen', [PagosController::class,'vistaResumen']);
 
 //Route::get('/estadisticas', [Controller::class, 'estadisticas']);
 
-
+Route::get('v1/dialog/pagos/mensualidades/alumnos', [PagosController::class,'vistaPagosAgregar']);
 
 
 

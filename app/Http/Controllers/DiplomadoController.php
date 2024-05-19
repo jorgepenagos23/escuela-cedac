@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Diplomado;
+use App\Models\GrupoCampaña;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -16,11 +17,29 @@ class DiplomadoController extends Controller
 
 
 
+
      }
-     
 
 
-     
+     public function listarGrupos(Request $request)
+     {
+         // Load groups with the associated diplomado using eager loading
+         $grupos = GrupoCampaña::with('diplomado')->get()->map(function($grupo) {
+             return [
+                 "id" => $grupo->id,
+                 'campaña' => $grupo->campaña,
+                 'grupo' => $grupo->grupo,
+                 'diplomado_id' => $grupo->id_diplomado,
+                 'nombre' => $grupo->diplomado->nombre ?? 'No definido', // Assuming the column is 'nombre'
+             ];
+         });
+
+         return response()->json([
+             'Grupos' => $grupos,
+         ]);
+     }
+
+
 
  public function index_diplomados()
 {
