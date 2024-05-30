@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
+import Consulta3 from "./Consulta3.vue";
 </script>
 
 <template>
@@ -15,22 +16,22 @@ import { Head } from "@inertiajs/vue3";
           <v-toolbar title="Estadisticas" color="indigo">
             <v-toolbar-items>
 
-                <v-dialog max-width="800">
+                <v-dialog max-width="1200">
                     <template v-slot:activator="{ props: activatorProps }">
                       <v-btn
                         v-bind="activatorProps"
                         color="surface-variant"
-                        text="Diplomados "
+                        text="Colegiaturas "
                         variant="flat"
                         prepend-icon=" mdi-coffee-to-go-outline"
                       ></v-btn>
                     </template>
 
                     <template v-slot:default="{ isActive }">
-                      <v-card title=" Consulta de 3 Productos Mas Vendidos">
+                      <v-card title=" Busqueda por Periodo para Colegiaturas ">
                         <v-card-text>
+                            <Consulta3></Consulta3>
                         </v-card-text>
-
                         <v-card-actions>
                           <v-spacer></v-spacer>
 
@@ -109,7 +110,7 @@ import { Head } from "@inertiajs/vue3";
         <div class="max-w-7xl mx-auto p-6 lg:p-8">
 
 
-            <v-card>
+            <v-card class="mt-6">
 
                 <v-toolbar title="Recaudo de  Mensualidades por Diplomado " color="indigo">
                     <v-toolbar-items> </v-toolbar-items>
@@ -121,15 +122,15 @@ import { Head } from "@inertiajs/vue3";
                   </v-toolbar>
 
                   <v-container>
-                    <div>
-                      <!-- Contenedor del segundo gráfico -->
-                      <canvas id="miGrafico" width="900" height="100"></canvas>
-                      <!-- Aquí se renderizará el segundo gráfico -->
-                    </div>
+                        <v-card>
+                          <div class="chart-container">
+                            <canvas id="miGrafico"></canvas>
+                          </div>
+                        </v-card>
                   </v-container>
             </v-card>
 <br><br>
-        <v-card>
+<v-card class="mt-6">
 
             <v-toolbar title="Recaudo de Inscripciones por Diplomado" color="indigo">
                 <v-toolbar-items> </v-toolbar-items>
@@ -140,11 +141,9 @@ import { Head } from "@inertiajs/vue3";
               </v-toolbar>
 
               <v-container>
-                <div>
-                  <!-- Contenedor del segundo gráfico -->
-                  <canvas id="miGrafico2" width="900" height="100"></canvas>
-                  <!-- Aquí se renderizará el segundo gráfico -->
-                </div>
+                <div class="chart-container">
+                    <canvas id="miGrafico2"></canvas>
+                  </div>
               </v-container>
         </v-card>
 
@@ -200,10 +199,12 @@ import { Head } from "@inertiajs/vue3";
 </style>
 <script>
 import axios from 'axios';
+import Consulta3 from './Consulta3.vue'
 import Chart from 'chart.js/auto'; // Importa solo lo necesario de Chart.js
 
 export default {
 
+	components: { Consulta3 },
     data(){
 return {
         dialog1:false,
@@ -273,6 +274,8 @@ methods:{
         const datosProductos = response.data.sumaIncripciones; // Cambiar a response.data.SumaPagos
 
         // Extraer los nombres de los productos y los totales pagados
+        const etiquetas = datosProductos.map(producto => `${producto.nombre_diplomado} (${producto.MesAnio})`);
+
         const nombresProductos = datosProductos.map(producto => producto.nombre_diplomado);
         const totalesPagados = datosProductos.map(producto => producto.TotalInscripcion);
 
@@ -281,11 +284,11 @@ methods:{
         const miGrafico2 = new Chart(ctx, {
           type: 'bar',
           data: {
-            labels: nombresProductos,
+            labels: etiquetas,
             datasets: [{
               label: 'Total Pagado por Inscritos',
               data: totalesPagados,
-              backgroundColor: 'rgba(16, 183, 250)', // Color de fondo de las barras
+              backgroundColor: 'rgb(240, 128, 128)', // Color de fondo de las barras
         borderColor: 'rgba(75, 192, 192, 1)', // Color del borde de las barras
               borderWidth: 1
             }]
@@ -314,50 +317,57 @@ methods:{
         this.obtenerAlumnos_Abonos_Pagados();
         this.obtenerSumaInscripcion();
 
+        axios.get('api/v1/pagosmensualidatestotal/api2024G')
+  .then(response => {
+    const datosProductos = response.data.SumaPagos;
 
+    // Crear etiquetas que incluyan tanto el nombre del diplomado como el MesAnio
+    const etiquetas = datosProductos.map(producto => `${producto.Diplomado} (${producto.MesAnio})`);
+    const totalesPagados = datosProductos.map(producto => producto.TotalPagadoAbono);
 
+    // Crear la gráfica de barras
+    const ctx = document.getElementById('miGrafico').getContext('2d');
+    const miGrafico = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: etiquetas,
+        datasets: [{
+          label: 'Total Pagado',
+          data: totalesPagados,
+          backgroundColor: '#3D9970', // Color de las barras con efecto 3D
+borderColor: '#2E856E', // Color del borde de las barras
+// Color sólido del borde de las barras
 
-
-    axios.get('api/v1/pagosmensualidatestotal/api2024G')
-      .then(response => {
-        const datosProductos = response.data.SumaPagos; // Cambiar a response.data.SumaPagos
-
-        // Extraer los nombres de los productos y los totales pagados
-        const nombresProductos = datosProductos.map(producto => producto.Diplomado);
-        const totalesPagados = datosProductos.map(producto => producto.TotalPagadoAbono);
-
-        // Crear la gráfica de barras
-        const ctx = document.getElementById('miGrafico').getContext('2d');
-        const miGrafico = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: nombresProductos,
-            datasets: [{
-              label: 'Total Pagado',
-              data: totalesPagados,
-              backgroundColor: 'rgb(88, 214, 141)', // Color de las barras
-              borderColor: 'rgb(252, 7, 7)', // Color del borde de las barras
-              borderWidth: 1
-            }]
-          },
-          options: {
-            scales: {
-              y: {
-                beginAtZero: true // Comenzar el eje y desde cero
-              }
-            }
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true // Comenzar el eje y desde cero
           }
-        });
-      })
-      .catch(error => {
-        console.error('Error al obtener los datos de la API:', error);
-      });
+        }
+      }
+    });
+  })
+  .catch(error => {
+    console.error('Error al obtener los datos de la API:', error);
+  });
+
+
+
+
+
 
   }
 
+
 };
 </script>
-
 <style>
-/* Agrega estilos necesarios si es necesario */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 400px; /* Altura inicial del contenedor del gráfico */
+}
 </style>

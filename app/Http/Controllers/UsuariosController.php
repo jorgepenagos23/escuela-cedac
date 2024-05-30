@@ -13,6 +13,22 @@ class UsuariosController extends Controller
      */
 
 
+     public function listarAsesores(){
+        $usuarios = User::select(
+            'name',
+            'id'
+
+        )->where('role','tutoria')
+        ->get();
+
+        return response()->json([
+            "asesores"=> $usuarios
+
+        ]);
+
+     }
+
+
      public function listarUsuarios(Request $request){
 
 

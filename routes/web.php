@@ -60,7 +60,7 @@ Route::get('/mensualidades/pagos',[PagosController::class,'vistaPagos'])->name('
 
 Route::get('/resumen', [PagosController::class,'vistaResumen']);
 
-
+Route::get( '/seguimiento/tutorias', [PagosController::class,'seguimientotutorias']);
 
 //Route::get('/estadisticas', [Controller::class, 'estadisticas']);
 

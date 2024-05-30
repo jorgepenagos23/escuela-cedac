@@ -1,368 +1,230 @@
+<script setup>
+import { ref } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import axios from 'axios';
+import swal from 'sweetalert';
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import { Head } from "@inertiajs/vue3";
+import { provide } from 'vue';
+
+const page = usePage()
+console.log('page',page.props)
+
+const userId = page.props.userId;
+console.log('user id  ',userId);
+
+</script>
 <template>
   <v-app>
     <v-container class="my-8">
-      <v-row>
-        <v-col cols="12" sm="15">
-          <v-row align="center">
-            <v-col cols="10">
-              <v-text-field
-                v-model="busqueda"
-                label="Buscar por matrícula o nombre"
-                outlined
-                dense
-                variant="solo"
-                prepend-icon="mdi-account-search-outline"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="2">
-              <v-btn @click="buscarAlumnos" color="primary" dark block>
-                <v-icon>mdi-magnify</v-icon>
-              </v-btn>
-              <v-btn @click="limpiarBusqueda" color="error" dark block>
-                <v-icon>mdi-backspace-outline</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
+      <v-row align="center">
+        <v-col cols="12" sm="8" md="6" lg="4">
+          <v-text-field
+            v-model="busqueda"
+            label="Buscar por matrícula o nombre"
+            outlined
+            dense
+            variant="solo"
+            prepend-icon="mdi-account-search-outline"
+          ></v-text-field>
+        </v-col>
+        <v-col cols="12" sm="4" md="6" lg="8" class="d-flex justify-end">
+          <v-btn @click="buscarAlumnos" color="primary" dark>
+            <v-icon>mdi-magnify</v-icon>
+          </v-btn>
+          <v-btn @click="limpiarBusqueda" color="error" dark>
+            <v-icon>mdi-backspace-outline</v-icon>
+          </v-btn>
         </v-col>
       </v-row>
 
-      <v-card class="mx-auto" max-width="1200" color="grey-lighten-3">
+      <v-card class="mx-auto" max-width="1000" color="white">
         <v-virtual-scroll
           :items="alumnosFiltrados"
           style="margin-top: 10px"
-
           item-height="100"
         >
-          <template v-slot:default="{ item: alumnos }"
-          >
-            <v-list-item class="custom-list-item" elevation="16"  >
-
-              <v-list-item-content class="custom-list-content"  >
-
+          <template v-slot:default="{ item: alumnos }">
+            <v-list-item class="custom-list-item" elevation="16">
+              <v-list-item-content class="custom-list-content">
                 <v-list-item-title class="font-weight-bold">
-                  <v-chip class=""
-                  color="black  "
-
-                  >
+                  <v-chip color="black">
                     <v-icon icon="mdi-account-circle-outline" start></v-icon>
-                 {{ alumnos.nombre_completo }}
-                 {{ alumnos.alumno_id }}
-
+                    {{ alumnos.nombre_completo }}
                   </v-chip>
-
-
                 </v-list-item-title>
-
               </v-list-item-content>
               <v-list-item-action>
                 <v-dialog max-width="1000">
-                  <template v-slot:activator="{ props: activatorProps }">
-                    <v-btn
-                    v-bind="activatorProps"
-                    height="30"
-                    class="text-none mb-4"
-                    color="indigo-darken-3"
-                    size="large"
-                    variant="flat"
-                    prepend-icon="mdi-credit-card-outline"
-                    text="Agregar Colegiatura"
-                    @click="obtenerPagosColegiaturas(alumnos.alumno_id, alumnos.diplomado_id, alumnos.nombre_completo)"
+                    <template v-slot:activator="{ props: activatorProps }">
+                      <v-btn
+                        v-bind="activatorProps"
+                        class="mb-2 sm:mb-4"
+                        color="green"
+                        size="large"
+                        variant="flat"
+                        prepend-icon="mdi-credit-card-outline"
+                        @click="obtenerPagosColegiaturas(alumnos.alumno_id, alumnos.diplomado_id, alumnos.nombre_completo)"
+                      >
+                        Agregar Colegiatura
+                      </v-btn>
+                    </template>
+                    <template v-slot:default="{ isActive }">
+                      <v-card>
+                        <v-card-text>
+                            <v-card class="mx-auto bg-white dark:bg-gray-800 max-w-full sm:max-w-auto" variant="flat">
+                                <v-sheet color="indigo">
+                                    <v-card-item>
+                                        <template v-slot:prepend>
+                                            <v-card-title>
+                                                <v-icon icon=" mdi-account-circle" start></v-icon>
 
-                  >
-                  </v-btn>
+                                                {{ alumnos.nombre_completo }}
+                                            </v-card-title>
+                                        </template>
 
-                  </template>
+                                        <v-divider class="mx-2" vertical></v-divider>
 
-                  <template v-slot:default="{ isActive }">
-                    <v-card>
-                      <v-card-text>
-                        <v-card
-                          class="mx-auto"
-                          color="white"
-                          max-width="auto"
-                          min-height="auto"
-                          theme="dark"
-                          variant="flat"
-                        >
-                          <v-sheet
-                            color="indigo"
-                          >
-                            <v-card-item>
-                              <template v-slot:prepend>
-                                <v-card-title>
-                                  <v-icon icon=" mdi-account-circle" start></v-icon>
+                                        <template v-slot:append>
+                                            <v-btn class="ms-4 text-none text-subtitle-1"
+                                                color="red" size="small" variant="flat">
+                                                Pendiente {{ alumnos.Pendiente_Pagar }}
+                                            </v-btn>
+                                        </template>
+                                    </v-card-item>
+                                </v-sheet>
 
-                                  {{ alumnos.nombre_completo }}
-                                  {{ alumnos.alumno_id }}
-                                </v-card-title>
-                              </template>
+                                <v-card class="m-4 bg-blue-gray-800 rounded-lg" variant="flat">
+                                  <v-card-item>
+                                    <v-card-title class="text-base md:text-lg lg:text-xl xl:text-2xl font-semibold text-gray-200 dark:text-gray-300 flex flex-col sm:flex-row items-center justify-center sm:justify-start">
+                                      <div class="flex flex-col sm:flex-row items-center sm:items-start">
+                                        <v-icon color="#949cf7" icon="mdi-calendar"
+                                        start></v-icon>
 
-                              <v-divider class="mx-2" vertical></v-divider>
+                                    <span class="text-medium-emphasis font-weight-bold">
+                                        Fecha de Inscripcion:
+                                        {{ alumnos.fecha_inscripcion }} </span>
 
-                              <template v-slot:append>
-                                <v-btn
-                                  class="ms-4 text-none text-subtitle-1"
-                                  color="red"
-                                  size="small"
-                                  variant="flat"
-                                >
-                                  Pendiente {{ alumnos.Pendiente_Pagar }}
-                                </v-btn>
-                              </template>
-                            </v-card-item>
-                          </v-sheet>
+                                        <v-spacer></v-spacer>
+                                        <v-chip color="primary" variant="flat"
+                                        prepend-icon="mdi-account-multiple"  >
+                                            Campaña {{ alumnos.campaña }}
+                                          </v-chip>
 
-                          <v-card
-                            class="ma-4"
-                            color="blue-grey-darken-4
-                            "
-                            rounded="lg"
-                            variant="flat"
-                          >
-                            <v-card-item>
-                              <v-card-title class="text-body-2 d-flex align-center">
-                                <v-icon
-                                  color="#949cf7"
-                                  icon="mdi-calendar"
-                                  start
-                                ></v-icon>
-
-                                <span class="text-medium-emphasis font-weight-bold">
-                                  Fecha de Inscripcion:
-                                  {{ alumnos.fecha_inscripcion }}</span
-                                >
-                                <v-chip
-                                  class="ms-2 text-medium-emphasis"
-                                  color="grey-darken-4"
-                                  prepend-icon="mdi-account-multiple"
-                                  size="small"
-                                  variant="flat"
-                                >
-                                  Campaña {{ alumnos.campaña }}</v-chip
-                                >
-
-                                <v-spacer></v-spacer>
-
-                                <v-chip
-                                  class="ms-5 text-medium-emphasis"
-                                  color="grey-darken-4"
-                                  prepend-icon="mdi-account-multiple"
-                                  size="small"
-                                  variant="flat"
-                                >
-                                  Grupo {{ alumnos.grupo }}</v-chip
-                                >
-                                <v-chip
-                                  class="ms-5 text-medium-emphasis"
-                                  color="grey-darken-4"
-                                  prepend-icon="mdi-account-multiple"
-                                  size="small"
-                                  variant="flat"
-                                >
-                                  {{ alumnos.nombre_diplomado }}
-                                </v-chip>  <v-chip
-                                class="ms-5 text-medium-emphasis"
-                                color="grey-darken-4"
-                                prepend-icon="mdi-account-multiple"
-                                size="small"
-                                variant="flat"
-                              >
-                              Tutor :  {{ alumnos.Tutor }}
-                              </v-chip>
-                              <v-chip
-                              class="ms-5 text-medium-emphasis"
-                              color="grey-darken-4"
-                              prepend-icon="mdi-currency-usd"
-                              size="small"
-                              variant="flat"
-                            >
-                              {{ alumnos.monto_inscripcion }}
-                            </v-chip>
-                              </v-card-title>
-
-                              <v-container>
-                                <v-col
-                                v-for="(pago, index) in pagosColegiaturaAlumno2"
-                                :key="index" >
-                                <v-card>
-                                    <v-card-title></v-card-title>
-                                    <v-card-text>
-                                      <a href="#" class="block bg-white py-3 border-t">
-
-                                        <div class="px-4 py-2 flex  justify-between">
-                                            <div class="text-green-darken-3 text-h6 font-weight-bold">$ {{ pago.pago_colegiatura }} MXN </div>
-                                            <span class="text-sm font-semibold text-gray-600">Fecha de Pago : {{ pago.Fecha_PrimerContacto }}</span>
-                                            <span class="text-sm font-semibold text-gray-900 px-4 py-2"> ID pago: {{pago.idpago}}</span>
-                                            <span class="text-sm font-semibold text-gray-900 px-4 py-2"> Tutor :{{pago.Tutor}}</span>
-                                            <span class="text-sm font-semibold text-gray-900 px-4 py-2"> Asesor :{{pago.Asesor}}</span>
-                                        </div>
-                                        <span class="text-sm font-semibold text-gray-900 px-4 py-2">{{pago.Titular}}</span>
-                                        <span class="text-sm font-semibold text-gray-900 px-4 py-2"> No Cuenta
-                                             {{pago.numero_cuenta}}</span>
-                                        <span class="text-sm font-semibold text-gray-900 px-4 py-2"> {{pago.CLABE}}</span>
-                                        <span class="text-sm font-semibold text-gray-900 px-4 py-2"> {{pago.banco}}</span>
+                                          <v-chip color="primary" variant="flat"
+                                          prepend-icon="mdi-account-multiple"  >
+                                          Grupo {{ alumnos.grupo }}
+                                                  </v-chip>
+                                      </div>
+                                      <div class="flex flex-col sm:flex-row items-center sm:items-start mt-2 sm:mt-0 sm:ml-4">
+                                        <v-chip color="green" variant="flat">    {{ alumnos.nombre_diplomado }}</v-chip>
+                                        <v-chip color="red" variant="flat">  $   {{ alumnos.monto_inscripcion }}</v-chip>
+                                      </div>
+                                    </v-card-title>
+                                    <v-container>
+                                      <v-row>
+                                        <v-col v-for="(pago, index) in pagosColegiaturaAlumno2" :key="index" class="mb-4" cols="12">
+                                          <v-card class="bg-white dark:bg-gray-900 shadow-md rounded-lg">
+                                            <v-card-title></v-card-title>
+                                            <v-card-text class="p-4">
+                                              <div class="flex justify-between items-center mb-2">
+                                                <div class="text-green-600 dark:text-green-400 text-lg font-semibold">${{ pago.pago_colegiatura }} MXN</div>
+                                                <span class="text-sm font-semibold text-gray-600 dark:text-gray-300">Fecha de Pago : {{ pago.Fecha_PrimerContacto }}</span>
+                                              </div>
+                                              <div class="flex justify-between items-center">
+                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">ID pago: {{ pago.idpago }}</span>
+                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">Tutor: {{ pago.Tutor }}</span>
+                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">Asesor: {{ pago.Asesor }}</span>
+                                              </div>
+                                              <div class="mt-2">
+                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">{{ pago.Titular }}</span>
+                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">No Cuenta {{ pago.numero_cuenta }}</span>
+                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">{{ pago.CLABE }}</span>
+                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">{{ pago.banco }}</span>
+                                              </div>
+                                            </v-card-text>
+                                          </v-card>
+                                        </v-col>
+                                      </v-row>
+                                    </v-container>
+                                  </v-card-item>
+                                </v-card>
+                              </v-card>
 
 
-
-                                    </a>
-                                    </v-card-text>
-                                  </v-card>
-                                </v-col>
-
-                              </v-container>
+                              <form class="max-w-7xl m-4 p-10 bg-gray-50 rounded shadow-xl" @submit.prevent="EnviarPago">
+                                <p class="text-gray-800 font-medium">Captura el pago de Colegiatura</p>
+                                <div class="mb-6">
+                                  <div class="d-flex align-items-center">
+                                    <v-chip class="ma-2" color="deep-orange-darken-4">Monto</v-chip>
+                                    <v-text-field v-model="pago_colegiatura" color="green" class="white" variant="outlined" type="number">$</v-text-field>
+                                  </div>
+                                </div>
+                                <div class="mb-6">
+                                  <div class="d-flex align-items-center">
+                                    <v-chip class="ma-2" color="black">Nombre</v-chip>
+                                    <select v-model="alumno_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4 -500 focus:border-deep-orange-darken-4 -500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4 -500 dark:focus:border-deep-orange-darken-4 -500">
+                                      <option disabled selected>Selecciona</option>
+                                      <option v-for="pago in uniquePagos" :key="pago.id" :value="pago.alumno_id">{{ pago.nombre_completo }}</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="mb-6">
+                                  <div class="d-flex align-items-center">
+                                    <v-chip class="ma-2" color="black">Diplomado</v-chip>
+                                    <select v-model="diplomado_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4 -500 focus:border-deep-orange-darken-4 -500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4 -500 dark:focus:border-deep-orange-darken-4 -500">
+                                      <option disabled selected>Selecciona</option>
+                                      <option v-for="pago in uniqueDiplomados" :key="pago.id" :value="pago.diplomado_id">{{ pago.nombre_diplomado }}</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="mb-6">
+                                  <div class="d-flex align-items-center">
+                                    <v-chip class="ma-2" color="black">No de Cuenta</v-chip>
+                                    <select v-model="selectedTitular" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4 -500 focus:border-deep-orange-darken-4 -500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4 -500 dark:focus:border-deep-orange-darken-4 -500">
+                                      <option disabled selected>Selecciona un Numero de Cuenta</option>
+                                      <option v-for="titular in cuentaDeposito" :key="titular.id" :value="titular.id">{{ titular.titular }}
+                                        <option>{{ titular.CLABE }}</option>
+                                      </option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="mb-6">
+                                  <div class="d-flex align-items-center">
+                                    <v-chip class="ma-2" color="black">Fecha</v-chip>
+                                    <v-text-field label="Fecha de Inscripción" required readonly color="black" v-model="fecha_inscripcion" type="date" variant="outlined" class="w-full px-4 py-2"></v-text-field>
+                                  </div>
+                                </div>
+                                <div class="mt-4">
+                                  <v-btn class="mb-8" color="green" size="large" variant="elevated" type="submit" block>Enviar</v-btn>
+                                  <button class="middle none center mr-4 rounded-lg bg-red-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-red-500/20 transition-all hover:shadow-lg hover:shadow-red-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none" data-ripple-light="true">
+                                    Vaciar
+                                  </button>
+                                </div>
+                              </form>
 
 
 
-                            </v-card-item>
+                        </v-card-text>
+                        <v-card-actions>
+                          <v-spacer></v-spacer>
+                          <v-btn text="Cerrar" @click="isActive.value = false"></v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </template>
+                  </v-dialog>
 
 
-
-                          </v-card>
-
-
-
-                        </v-card>
-
-                        <form
-                          class="max-w-7xl m-4 p-10 bg-gray-50									 rounded shadow-xl"
-                          @submit.prevent="EnviarPago"    >
-                          <p class="text-gray-800 font-medium">
-                            Captura el pago de Colegiatura
-                          </p>
-
-                          <div class="mb-6">
-                            <div class="d-flex align-items-center">
-                              <v-chip class="ma-2" color="deep-orange-darken-4
-">
-                                Monto
-                              </v-chip>
-                              <v-text-field v-model="pago_colegiatura"
-                              color="green"
-                              class="white"
-                              variant="outlined"
-                              type="number">$</v-text-field>
-                            </div>
-                          </div>
-                        <div class="mb-6">
-                            <div class="d-flex align-items-center">
-                              <v-chip class="ma-2" color="black" >
-                                Nombre
-                              </v-chip>
-                              <select v-model="alumno_id"
-                              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4
-                                        -500 focus:border-deep-orange-darken-4
-                                        -500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4
-                                        -500 dark:focus:border-deep-orange-darken-4
-                                        -500">
-                              <option disabled selected>Selecciona</option>
-                              <option v-for="pago in uniquePagos" :key="pago.id" :value="pago.alumno_id">
-                                {{ pago.nombre_completo }}
-                              </option>
-                            </select>
-
-                            </div>
-                          </div>
-
-                          <div class="mb-6">
-                            <div class="d-flex align-items-center">
-                              <v-chip class="ma-2" color="black
-">
-                                Diplomado
-                              </v-chip>
-                              <select v-model="diplomado_id"
-                              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4
-                                        -500 focus:border-deep-orange-darken-4
-                                        -500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4
-                                        -500 dark:focus:border-deep-orange-darken-4
-                                        -500">
-                              <option disabled selected>Selecciona</option>
-                              <option v-for="pago in uniqueDiplomados" :key="pago.id" :value="pago.diplomado_id">
-                                {{ pago.nombre_diplomado }}
-                              </option>
-                            </select>
-                            </div>
-                          </div>
-
-                          <div class="mb-6">
-                            <div class="d-flex align-items-center">
-                              <v-chip class="ma-2" color="black">
-                                No de Cuenta
-                              </v-chip>
-                              <select  v-model="selectedTitular"
-                                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4
-                    -500 focus:border-deep-orange-darken-4
-                    -500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4
-                    -500 dark:focus:border-deep-orange-darken-4
-                    -500">
-                                                <option disabled selected>Selecciona un Numero de Cuenta</option>
-                              <option v-for="titular in cuentaDeposito" :key="titular.id"
-                                  :value="titular.id">
-                                  {{ titular.titular }}
-                              <option>
-
-                                  {{ titular.CLABE }}
-                              </option>
-
-                              </option>
-
-                          </select>
-                            </div>
-                          </div>
-                          <div class="mb-6">
-                            <div class="d-flex align-items-center">
-                              <v-chip class="ma-2" color="black">
-                                Fecha
-                              </v-chip>
-                              <v-text-field label="Fecha de Inscripción" required readonly color="black"
-                              v-model="fecha_inscripcion" type="date" variant="outlined"
-                              class="w-full px-4 py-2"></v-text-field>
-
-                            </div>
-                          </div>
-
-                          <div class="mt-4">
-                            <v-btn
-                            class="mb-8"
-                            color="green"
-                            size="large"
-                            variant="elevated"
-                            type="submit"
-
-                            block
-                        >
-
-                            Enviar
-                        </v-btn>
-
-                            <button
-                              class="middle none center mr-4 rounded-lg bg-red-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-red-500/20 transition-all hover:shadow-lg hover:shadow-red-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-                              data-ripple-light="true"
-                            >
-                              Vaciar
-                            </button>
-                          </div>
-                        </form>
-                      </v-card-text>
-
-                      <v-card-actions>
-                        <v-spacer></v-spacer>
-
-                        <v-btn text="Cerrar " @click="isActive.value = false"></v-btn>
-                      </v-card-actions>
-                    </v-card>
-                  </template>
-                </v-dialog>
               </v-list-item-action>
             </v-list-item>
           </template>
         </v-virtual-scroll>
-
-
       </v-card>
-
     </v-container>
   </v-app>
 </template>
+
+
 
 <style scoped>
 .custom-list-item {
@@ -388,10 +250,15 @@
 </style>
 
 <script>
-import axios from "axios";
 import Swal from "sweetalert"; // Asegúrate de usar "sweetalert2"
+import { ref } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import axios from 'axios';
+
+
 
 export default {
+
   data() {
     return {
         alumno_id: null, // Variable para almacenar el ID del alumno de forma segura
@@ -421,6 +288,8 @@ export default {
       cuentaDeposito: [],
       pagosColegiaturaAlumno2:[],
       alumnoIdSeleccionado: null,
+      userId:null, // Definir userId aquí
+
     };
   },
   created() {
@@ -451,15 +320,25 @@ export default {
 
 
   },
+  mounted() {
+
+},
+
   methods: {
 
   EnviarPago ()  {
-    // Asegúrate de que este método esté siendo llamado desde el componente Vue y no como una función de callback
+    const page = usePage()
+console.log('page',page.props)
+
+const userId = page.props.userId;
+console.log('user id  ',userId);
+
+
 
     const inscripcion = {
       Fecha_PrimerContacto: this.fecha_inscripcion,
       pago_colegiatura: this.pago_colegiatura,
-      tutor: 7,
+      tutor: userId, // Usar el id del tutor pasado como prop
       status: 'Activo',
       cuentadeposito: this.selectedTitular,
       alumno_id: this.alumno_id, // Usando alumnos.alumno_id

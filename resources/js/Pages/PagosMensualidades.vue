@@ -13,20 +13,27 @@ import TablaAlumnos from "./TablaAlumnos.vue";
         <h2 class="font-semibold text-xl text-gray-800 leading-tight"></h2>
         <v-container>
           <div class="leading-loose">
-            <v-card class="mx-auto" max-width="auto" max-height="auto" color="indigo">
+            <v-card class="mx-auto" max-width="auto" max-height="auto" color="light-green
+            ">
               <v-card-item class="bg-orange-darken-4">
-                <v-card-title> Directorio de Pagos </v-card-title>
 
-                <template v-slot:append>
-                  <v-btn
-                    color="white"
-                    icon="mdi-credit-card-outline"
-                    size="small"
-                  ></v-btn>
-                </template>
+                  <v-toolbar title="Dar Seguimiento a un nueva matricula"  class="bg-orange-darken-4">
+                        <v-toolbar-items>
+                            <v-btn
+
+
+                            link href="/seguimiento/tutorias"
+                            >Seguimiento
+                        </v-btn>
+                        </v-toolbar-items>
+
+                        <v-divider class="mx-2" vertical></v-divider>
+
+                        <v-btn icon="mdi-dots-vertical"></v-btn>
+                    </v-toolbar>
               </v-card-item>
 
-              <v-card-text class="pt-4"> Desglose de Estado Colegiaturas </v-card-text>
+              <v-card-text class="pt-4"> Cartera de  Colegiaturas </v-card-text>
 
               <div class="center">
                 <TablaAlumnos></TablaAlumnos>

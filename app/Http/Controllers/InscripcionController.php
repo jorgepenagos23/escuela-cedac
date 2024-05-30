@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Inscripcion;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -15,7 +17,14 @@ class InscripcionController extends Controller
 
     public function seguimiento_inscripciones(){
 
-        return Inertia::render('Inscripciones_Seguimiento');
+        $user = User::find(auth()->user()->id);
+
+
+
+        return Inertia::render('Inscripciones_Seguimiento',
+        [
+            'userId'=> $user->id  ]
+    );
     }
 
 
@@ -94,27 +103,25 @@ class InscripcionController extends Controller
         ]);
     }
 
-
     public function sumaIncripciones()
     {
         $sumaIncripciones = Inscripcion::select(
             'diplomados.id as id_diplomado',
             'diplomados.nombre as nombre_diplomado',
+            DB::raw("DATE_FORMAT(alumno_inscripcion.fecha_inscripcion, '%Y-%m') as MesAnio"),
             DB::raw('COUNT(alumno_inscripcion.id) as TotalInscritos'), // Contar el número de inscritos
             DB::raw('GROUP_CONCAT(alumno_inscripcion.fecha_inscripcion) as FechaInscrito'), // Concatenar fechas de inscripción
             DB::raw('SUM(alumno_inscripcion.monto_inscripcion) as TotalInscripcion') // Sumar el monto de inscripción
         )
         ->join('diplomados', 'diplomados.id', '=', 'alumno_inscripcion.diplomado_id')
         ->orderByDesc('TotalInscripcion')
-        ->groupBy('diplomados.id', 'diplomados.nombre')
+        ->groupBy('diplomados.id', 'diplomados.nombre', 'MesAnio') // Agrupar también por MesAnio
         ->get();
 
         return response()->json([
             'sumaIncripciones' => $sumaIncripciones
         ]);
     }
-
-
 
 
     public function create()

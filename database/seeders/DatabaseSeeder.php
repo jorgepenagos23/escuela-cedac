@@ -235,7 +235,7 @@ class DatabaseSeeder extends Seeder
             'fecha_inscripcion' => '2024-01-12',
             'fecha_primer_pago_colegiatura' => '2024-06-13',
             'monto_inscripcion' => 600,
-            'nombre_alumno' => 'Cris Mj',
+            'nombre_alumno' => 'Alfonso Camas',
             'celular' => '9614592435',
             'adicional' => 'No tiene',
             'asesor' => 5,
@@ -385,7 +385,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 1000,
+            'pago_colegiatura' => 1600,
             'status' => 'Activo',
             'tutor' => 7,
             'alumno_id' => 8,
@@ -396,7 +396,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 500,
+            'pago_colegiatura' => 1600,
             'status' => 'Activo',
             'tutor' => 7,
             'alumno_id' => 8,
@@ -407,7 +407,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 300,
+            'pago_colegiatura' => 1600,
             'status' => 'Activo',
             'tutor' => 7,
             'alumno_id' => 8,
@@ -418,7 +418,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 600,
+            'pago_colegiatura' => 1600,
             'status' => 'Activo',
             'tutor' => 7,
             'alumno_id' => 8,
@@ -431,7 +431,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 345,
+            'pago_colegiatura' => 1600,
             'status' => 'Activo',
             'tutor' => 3,
             'alumno_id' => 1,
@@ -443,7 +443,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 1234,
+            'pago_colegiatura' => 1600,
             'status' => 'Activo',
             'tutor' => 3,
             'alumno_id' => 1,
@@ -455,7 +455,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 567,
+            'pago_colegiatura' => 1600,
             'status' => 'Activo',
             'tutor' => 3,
             'alumno_id' => 1,
@@ -467,7 +467,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 789,
+            'pago_colegiatura' => 1600,
             'status' => 'Activo',
             'tutor' => 3,
             'alumno_id' => 1,
@@ -480,7 +480,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 2135,
+            'pago_colegiatura' => 1600,
             'status' => 'Activo',
             'tutor' => 3,
             'alumno_id' => 2,
@@ -492,7 +492,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 123,
+            'pago_colegiatura' => 1600,
             'status' => 'Activo',
             'tutor' => 3,
             'alumno_id' => 2,
@@ -504,7 +504,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 441,
+            'pago_colegiatura' => 1600,
             'status' => 'Activo',
             'tutor' => 3,
             'alumno_id' => 2,
@@ -516,7 +516,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 1245.00,
+            'pago_colegiatura' => 1600.00,
             'status' => 'Activo',
             'tutor' => 3,
             'alumno_id' => 2,
@@ -528,7 +528,7 @@ class DatabaseSeeder extends Seeder
         \App\Models\Pagos::create([
 
             'Fecha_PrimerContacto' => now(),
-            'pago_colegiatura' => 567.00,
+            'pago_colegiatura' => 1600.00,
             'status' => 'Activo',
             'tutor' => 3,
             'alumno_id' => 3,

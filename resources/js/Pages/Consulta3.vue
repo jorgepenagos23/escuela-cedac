@@ -1,79 +1,55 @@
 <template>
-    <v-container>
-        <v-row dense>
-            <v-col cols="6">
-                <v-card
-                color="indigo"
-                width="400"
-                title="Selecciona una de Inicio">
-                    <v-date-picker
-                    color="primary"
-                    v-model="fechaInicio"
-                    ></v-date-picker>
-
-                </v-card>
-
-            </v-col>
-
-            <v-col cols="6">
-                <v-card
-                color="yellow"
-                width="400"
-                title="Selecciona una fecha de Fin"
-                >
-                <v-date-picker
-                v-model="fechaFin"
-                ></v-date-picker>
-                </v-card>
-
-            </v-col>
-            <v-btn
-            color="red"
+    <div class="container mx-auto p-4">
+      <div class="flex flex-wrap -mx-2">
+        <div class="w-full md:w-1/2 px-2 mb-4">
+          <div class="bg-indigo-500 text-white p-4 rounded-lg shadow-lg">
+            <h2 class="text-lg font-bold mb-2">Selecciona una fecha de Inicio</h2>
+            <v-date-picker v-model="fechaInicio" class="w-full" />
+          </div>
+        </div>
+        <div class="w-full md:w-1/2 px-2 mb-4">
+          <div class="bg-yellow-500 text-white p-4 rounded-lg shadow-lg">
+            <h2 class="text-lg font-bold mb-2">Selecciona una fecha de Fin</h2>
+            <v-date-picker v-model="fechaFin" class="w-full" />
+          </div>
+          <button
             @click="enviarFecha"
-            prepend-icon=""
-            > Enviar Consulta por Rango</v-btn>
+            class="bg-red-500 text-white mt-4 px-4 py-2 rounded-lg shadow-lg w-full"
+          >
+            <span class="mdi mdi-database-search"></span> Obtener
+          </button>
+        </div>
+      </div>
+      <div v-if="SumaPagos.length > 0" class="mt-8">
+        <div v-for="(producto, index) in SumaPagos" :key="index" class="mb-4">
+          <div class="bg-lime-200 p-4 rounded-lg shadow-lg">
+            <h3 class="text-xl font-bold mb-2">{{ producto.Diplomado }}</h3>
+            <div class="text-green-800 text-lg font-semibold">
+              Colegiaturas : {{ producto.TotalPagadoAbono }} MXN
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="mt-8">
+        <div class="bg-gray-200 p-4 rounded-lg shadow-lg">
+          <h3 class="text-xl font-bold mb-2">No hay resultados</h3>
+          <p class="text-gray-800">No se encontraron resultados para el período de fechas seleccionado.</p>
+        </div>
+      </div>
+    </div>
+  </template>
 
-        </v-row>
-
-        <v-card
-        v-if="ProductoMasVendidoRango.length>0"
-        >
-        <v-col
-        v-for="(producto , index) in  ProductoMasVendidoRango"
-        :key="index"
-        >
-        <v-card
-        color="lime-lighten-5
-        "
-        :title="producto.nombre_producto">
-        <div class="text-green-darken-3 text-h6 font-weight-bold">Ventas: {{ producto.TotalPagado.toLocaleString() }} MXN </div>
-        <div>Cantidad Comprada: {{ producto.CantidadComprada }}</div>
-
-
-        </v-card>
-
-
-
-        </v-col>
-
-
-        </v-card>
-
-
-
-    </v-container>
-
-
-</template>
 
 <script>
+import swal from 'sweetalert';
+
 export default {
 
     data(){
         return{
             fechaInicio:null,
             fechaFin:null,
-            ProductoMasVendidoRango:[]
+            SumaPagos:[]
 
         }
 
@@ -98,7 +74,7 @@ export default {
             console.log('Fecha Final',fechaFin)
 
 
-            axios.post('api/v1/productos/fechaconsulta', {
+            axios.post('/api/v1/diplomados/fechaconsulta', {
 
                     fechaInicio :this.fechaInicio,
                     fechaFin :this.fechaFin
@@ -106,13 +82,15 @@ export default {
             })
             .then(response=>{
 
-                this.ProductoMasVendidoRango = response.data.ProductoMasVendidoRango;
+                this.SumaPagos = response.data.SumaPagos;
                 console.log('Envio exitoso', response)
 
             })
 
             .catch(function (error) {
                 console.log('Error',error)
+
+
             })
         },
 

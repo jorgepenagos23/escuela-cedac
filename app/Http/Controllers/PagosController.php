@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Inscripcion;
 use App\Models\Pagos;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -12,6 +16,49 @@ class PagosController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+     public function show_sinpago($id) {
+        $pagosColegiaturaAlumno2 = Inscripcion::leftJoin("pagos_colegiatura", "alumno_inscripcion.id", "=", "pagos_colegiatura.alumno_id")
+            ->whereNull("pagos_colegiatura.alumno_id")
+            ->where("alumno_inscripcion.id", $id) // Filtra por el ID
+            ->select('alumno_inscripcion.*')
+            ->get();
+
+        return response()->json([
+            'pagosColegiaturaAlumno2' => $pagosColegiaturaAlumno2
+        ]);
+    }
+
+    public function pendientesPagar(Request $request) {
+        $pendienteMesUser = Inscripcion::leftJoin("pagos_colegiatura", "alumno_inscripcion.id", "=", "pagos_colegiatura.alumno_id")
+            ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
+            ->whereNull("pagos_colegiatura.alumno_id")
+            ->select('alumno_inscripcion.id as alumno_id',
+            'alumno_inscripcion.nombre_alumno', 'alumno_inscripcion.fecha_inscripcion',
+            'alumno_inscripcion.saldo',
+            'alumno_inscripcion.celular',
+            'alumno_inscripcion.adicional',
+            'alumno_inscripcion.fecha_inscripcion',
+            'alumno_inscripcion.monto_inscripcion',
+             'diplomados.nombre as nombre_diplomado',
+             'alumno_inscripcion.diplomado_id as diplomado_id',
+             'diplomados.id as id_diplomado',
+
+             )
+            ->get();
+
+        // Eliminar el campo original 'id' ya que ahora tenemos 'alumno_id'
+        $pendienteMesUser->transform(function ($item) {
+            unset($item->id);
+            return $item;
+        });
+
+        return response()->json([
+            'pendienteMesUser' => $pendienteMesUser
+        ]);
+    }
+
+
     public function vistaResumen(){
 
         return Inertia::render("Resumen");
@@ -28,13 +75,33 @@ class PagosController extends Controller
         return Inertia::render("AgregarPagosMes");
      }
 
+     public function seguimientotutorias()  {
+
+        $user = User::find(Auth::user()->id);
 
 
+
+        return Inertia::render("SeguimientoTutoria", [
+            'userId'=> $user->id]);
+     }
+
+     public function s() {
+        $user = auth()->user();
+        return Inertia::render('YourComponentName', [
+            'userId' => $user->id,
+        ]);
+    }
 
      public function crudPagos(){
 
-        return Inertia::render('PagosMensualidades');
+        $user = User::find(auth()->user()->id);
+
+        return Inertia::render('PagosMensualidades',
+    [    'userId' => $user->id]
+    );
      }
+
+
 
         public function historialAlumno1(){
 
@@ -76,26 +143,34 @@ class PagosController extends Controller
 
     }
 
+    public function sumaPagos()
+    {
+        // Obtener el mes y año actual
+        $currentMonth = date('m');
+        $currentYear = date('Y');
 
-            public function sumaPagos(){
+        // Obtener el nombre del mes actual
+        $currentMonthName = Carbon::now()->monthName;
 
-                $SumaPagos = Pagos::select(
-                    "pagos_colegiatura.Fecha_PrimerContacto as FechaAbono",
-                    "diplomados.id as id_Diplomado",
-                    "diplomados.nombre as Diplomado",
+        // Obtener los pagos correspondientes al mes actual
+        $SumaPagos = Pagos::select(
+            DB::raw("DATE_FORMAT(pagos_colegiatura.Fecha_PrimerContacto, '%Y-%m') as MesAnio"),
+            "diplomados.id as id_Diplomado",
+            "diplomados.nombre as Diplomado",
+            DB::raw('SUM(pagos_colegiatura.pago_colegiatura) as TotalPagadoAbono')
+        )
+        ->join("diplomados", "diplomados.id", "=", "pagos_colegiatura.diplomado_id")
+        ->whereMonth('pagos_colegiatura.Fecha_PrimerContacto', $currentMonth)
+        ->whereYear('pagos_colegiatura.Fecha_PrimerContacto', $currentYear)
+        ->groupBy(DB::raw("DATE_FORMAT(pagos_colegiatura.Fecha_PrimerContacto, '%Y-%m')"), "diplomados.id", "diplomados.nombre")
+        ->orderByDesc('TotalPagadoAbono')
+        ->get();
 
-                    DB::raw('SUM(pagos_colegiatura.pago_colegiatura) as TotalPagadoAbono'),
-                )
-                ->join("diplomados", "diplomados.id", "=", "pagos_colegiatura.diplomado_id")
-                ->groupBy( "pagos_colegiatura.Fecha_PrimerContacto", "diplomados.id")
-                ->orderByDesc('TotalPagadoAbono')
-                ->get();
-
-            return response()->json([
-                'SumaPagos' => $SumaPagos
-            ]);
-            }
-
+        return response()->json([
+            'SumaPagos' => $SumaPagos,
+            'currentMonthName' => $currentMonthName // Enviar el nombre del mes actual al frontend
+        ]);
+    }
 
 
             // ESTA CONSULTA SERIA  PARA VER EL ABONO MENSUAL POR ALUMNO EN FECHAS
@@ -167,6 +242,7 @@ class PagosController extends Controller
             $pago->cuentadeposito = $request ->input('cuentadeposito');
             $pago->diplomado_id = $request ->input('diplomado_id');
             $pago->alumno_id = $request ->input('alumno_id');
+            $pago->tutor = $request ->input('tutor');
 
             $pago->save();
 
@@ -190,57 +266,55 @@ class PagosController extends Controller
 
     }
 
-    public function directorio(Request $request) {
-        $AlumnosEstadoPagar = Pagos::select(
-                'alumno_inscripcion.id as alumno_id',
-                'alumno_inscripcion.nombre_alumno as nombre_completo',
-                'alumno_inscripcion.saldo as Pendiente_Pagar',
-                'alumno_inscripcion.fecha_inscripcion as fecha_inscripcion',
-                'alumno_inscripcion.monto_inscripcion as monto_inscripcion',
-                'alumno_inscripcion.grupo_campa as grupo_campa',
-                'grupo_campañas.campaña as campaña',
-                'grupo_campañas.grupo as grupo',
-                'diplomados.nombre as nombre_diplomado',
-                'diplomados.id as diplomado_id',
+  public function directorio(Request $request) {
+    $AlumnosEstadoPagar = Pagos::select(
+            'alumno_inscripcion.id as alumno_id',
+            'alumno_inscripcion.nombre_alumno as nombre_completo',
+            'alumno_inscripcion.saldo as Pendiente_Pagar',
+            'alumno_inscripcion.fecha_inscripcion as fecha_inscripcion',
+            'alumno_inscripcion.monto_inscripcion as monto_inscripcion',
+            'alumno_inscripcion.grupo_campa as grupo_campa',
+            'grupo_campañas.campaña as campaña',
+            'grupo_campañas.grupo as grupo',
+            'diplomados.nombre as nombre_diplomado',
+            'diplomados.id as diplomado_id',
+            'alumno_inscripcion.created_at as created_at',
+            'alumno_inscripcion.updated_at as updated_at'
+            // Agregar los campos adicionales aquí
+        )
+        ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
+        ->join('users', 'users.id', '=', 'alumno_inscripcion.tutor')
+        ->join('users as tutores', 'tutores.id', '=', 'alumno_inscripcion.asesor')
+        ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
+        ->join('grupo_campañas', 'grupo_campañas.id', '=', 'alumno_inscripcion.grupo_campa')
+        ->join('cuenta_deposito', 'alumno_inscripcion.cuentadeposito', '=', 'cuenta_deposito.id')
+   //     ->where('alumno_inscripcion.saldo', '>', 0)
+        ->groupBy(
+            'alumno_inscripcion.id',
+            'alumno_inscripcion.nombre_alumno',
+            'alumno_inscripcion.saldo',
+            'alumno_inscripcion.fecha_inscripcion',
+            'alumno_inscripcion.grupo_campa',
+            'grupo_campañas.campaña',
+            'grupo_campañas.grupo',
+            'diplomados.nombre',
+            'cuenta_deposito.titular',
+            'cuenta_deposito.banco',
+            'cuenta_deposito.numero_cuenta',
+            'cuenta_deposito.CLABE',
+            'users.name',
+            'tutores.name',
+            'alumno_inscripcion.created_at',
+            'alumno_inscripcion.updated_at'
+        )
+        ->get();
 
-                'cuenta_deposito.titular as Titular',
-                'cuenta_deposito.banco as banco',
-                'cuenta_deposito.numero_cuenta as numero_cuenta',
-                'cuenta_deposito.CLABE as CLABE',
-                'users.name as Tutor',
-                'tutores.name as Asesor'
-            )
-            ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
-            ->join('users', 'users.id', '=', 'alumno_inscripcion.tutor')
-            ->join('users as tutores', 'tutores.id', '=', 'alumno_inscripcion.asesor')
-            ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
-            ->join('grupo_campañas', 'grupo_campañas.id', '=', 'alumno_inscripcion.grupo_campa')
-            ->join('cuenta_deposito', 'alumno_inscripcion.cuentadeposito', '=', 'cuenta_deposito.id')
-            ->where('alumno_inscripcion.saldo', '>', 0)
-            ->groupBy(
-                'alumno_inscripcion.id',
-                'alumno_inscripcion.nombre_alumno',
-                'alumno_inscripcion.saldo',
-                'alumno_inscripcion.fecha_inscripcion',
-                'alumno_inscripcion.grupo_campa',
-                'grupo_campañas.campaña',
-                'grupo_campañas.grupo',
-                'diplomados.nombre',
-                'cuenta_deposito.titular',
-                'cuenta_deposito.banco',
-                'cuenta_deposito.numero_cuenta',
-                'cuenta_deposito.CLABE',
-                'users.name',
-                'tutores.name'
-            )
-            ->get();
-
-        return response()->json([
-            'AlumnosEstadoPagar' => $AlumnosEstadoPagar,
-            'mesagge' => 'Exito en consulta',
-            'code' => 200,
-        ]);
-    }
+    return response()->json([
+        'AlumnosEstadoPagar' => $AlumnosEstadoPagar,
+        'mesagge' => 'Exito en consulta',
+        'code' => 200,
+    ]);
+}
 
     /**
      * Display
@@ -278,6 +352,33 @@ class PagosController extends Controller
             'pagosColegiaturaAlumno2' => $pago
         ]);
     }
+
+
+    public function diplomadostotalfecha(Request $request)
+    {
+        // Obtener la fecha de inicio y fin desde el request
+        $fechaInicio = $request->input('fechaInicio');
+        $fechaFin = $request->input('fechaFin');
+
+        $diplomadosRecaudoTotal = Pagos::select(
+            "diplomados.id as id_Diplomado",
+            "diplomados.nombre as Diplomado",
+            DB::raw('MIN(pagos_colegiatura.Fecha_PrimerContacto) as FechaInicio'),
+            DB::raw('MAX(pagos_colegiatura.Fecha_PrimerContacto) as FechaFin'),
+            DB::raw('SUM(pagos_colegiatura.pago_colegiatura) as TotalPagadoAbono')
+        )
+        ->join("diplomados", "diplomados.id", "=", "pagos_colegiatura.diplomado_id")
+        ->whereBetween("pagos_colegiatura.Fecha_PrimerContacto", [$fechaInicio, $fechaFin])
+        ->groupBy("diplomados.id", "diplomados.nombre")
+        ->orderByDesc('TotalPagadoAbono')
+        ->get();
+
+        return response()->json([
+            'SumaPagos' => $diplomadosRecaudoTotal
+        ]);
+    }
+
+
 
 
     /**
