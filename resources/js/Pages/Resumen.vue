@@ -20,10 +20,10 @@ import Consulta3 from "./Consulta3.vue";
                     <template v-slot:activator="{ props: activatorProps }">
                       <v-btn
                         v-bind="activatorProps"
-                        color="surface-variant"
+                        color="indigo"
                         text="Colegiaturas "
                         variant="flat"
-                        prepend-icon=" mdi-coffee-to-go-outline"
+                        prepend-icon="mdi-currency-usd"
                       ></v-btn>
                     </template>
 
@@ -42,20 +42,40 @@ import Consulta3 from "./Consulta3.vue";
                   </v-dialog>
 
 
-                  <v-dialog max-width="800">
+                  <v-dialog max-width="auto">
                     <template v-slot:activator="{ props: activatorProps }">
                       <v-btn
                         v-bind="activatorProps"
-                        color="surface-variant"
-                        text="Grafica "
+                        color="indigo"
+                        text=" Base de Datos Liquidados "
                         variant="flat"
-                        prepend-icon="mdi-chart-box-multiple-outline"
+                        prepend-icon="mdi-database-search"
                       ></v-btn>
                     </template>
 
                     <template v-slot:default="{ isActive }">
-                      <v-card title="Consulta por Grafica">
+                      <v-card title="">
                         <v-card-text>
+
+        <v-card color="blue " flat>
+            <v-card title="Alumnos Liquidados">
+                <template v-slot:text>
+                    <v-text-field v-model="search" label="Buscar Abonos Netos Alumnos" prepend-inner-icon="mdi-magnify"
+                        variant="outlined" hide-details single-line></v-text-field>
+                </template>
+            </v-card>
+            <v-data-table :headers="headers" :items="pagosAbonosNetos" :search="search" class="bg-white "
+            :header-props="{ class: 'custom-header' }"
+
+
+
+            >
+            </v-data-table>
+
+        </v-card>
+
+
+
 
                         </v-card-text>
 
@@ -73,7 +93,7 @@ import Consulta3 from "./Consulta3.vue";
                     <template v-slot:activator="{ props: activatorProps }">
                         <v-btn
                           v-bind="activatorProps"
-                          color="surface-variant"
+                          color="indigo"
                           text="Consulta por Fechas "
                           variant="flat"
                           prepend-icon="mdi-chart-box-multiple-outline"
@@ -112,7 +132,8 @@ import Consulta3 from "./Consulta3.vue";
 
             <v-card class="mt-6">
 
-                <v-toolbar title="Recaudo de  Mensualidades por Diplomado " color="indigo">
+                <v-toolbar title="Recaudo de  Mensualidades por Diplomado (por MES ) " color="blue-darken-4
+                ">
                     <v-toolbar-items> </v-toolbar-items>
 
 
@@ -123,8 +144,8 @@ import Consulta3 from "./Consulta3.vue";
 
                   <v-container>
                         <v-card>
-                          <div class="chart-container">
-                            <canvas id="miGrafico"></canvas>
+                            <div class="chart-container" style="height: 60vh;">
+                                <canvas id="miGrafico"></canvas>
                           </div>
                         </v-card>
                   </v-container>
@@ -132,7 +153,8 @@ import Consulta3 from "./Consulta3.vue";
 <br><br>
 <v-card class="mt-6">
 
-            <v-toolbar title="Recaudo de Inscripciones por Diplomado" color="indigo">
+            <v-toolbar title="Recaudo de Inscripciones por Diplomado  (por MES  ) " color="blue-darken-4
+            ">
                 <v-toolbar-items> </v-toolbar-items>
 
                 <v-divider class="mx-2" vertical></v-divider>
@@ -147,30 +169,24 @@ import Consulta3 from "./Consulta3.vue";
               </v-container>
         </v-card>
 
+
         <v-card color="blue " flat>
-            <v-card title="Alumnos con Pagos Colegiaturas">
+            <v-toolbar title=" Alumnos Saldo Pendiente" color="red">
+                <v-toolbar-items> </v-toolbar-items>
+
+                <v-divider class="mx-2" vertical></v-divider>
+
+                <v-btn icon="mdi-dots-vertical"></v-btn>
+              </v-toolbar>
+
+            <v-card title="Buscar matricula ">
+
                 <template v-slot:text>
                     <v-text-field v-model="search" label="Buscar Abonos Netos Alumnos" prepend-inner-icon="mdi-magnify"
                         variant="outlined" hide-details single-line></v-text-field>
                 </template>
             </v-card>
-            <v-data-table :headers="headers" :items="pagosAbonosNetos" :search="search" class="bg-white "
-            :header-props="{ class: 'custom-header' }"
-
-
-
-            >
-            </v-data-table>
-
-        </v-card>
- <v-card color="blue " flat>
-            <v-card title="Alumnos Saldo Pendiente">
-                <template v-slot:text>
-                    <v-text-field v-model="search" label="Buscar Abonos Netos Alumnos" prepend-inner-icon="mdi-magnify"
-                        variant="outlined" hide-details single-line></v-text-field>
-                </template>
-            </v-card>
-            <v-data-table :headers="headersDeudas" :items="pagosPendientesNetos" :search="search" class="bg-red"
+            <v-data-table :headers="headersPendientes" :items="pagosPendientesNetos" :search="search" class=""
 
 
 
@@ -187,16 +203,10 @@ import Consulta3 from "./Consulta3.vue";
     </div>
   </div>
 </template>
-<style>
-.custom-header {
-    background-color: rgb(0, 184, 18); /* Color de fondo del encabezado */
-    color: rgb(248, 248, 248); /* Color del texto del encabezado */
-  }
-  .custom-header-pendiente {
-    background-color: rgb(253, 29, 29); /* Color de fondo del encabezado */
-    color: rgb(255, 249, 249); /* Color del texto del encabezado */
-  }
-</style>
+
+
+
+
 <script>
 import axios from 'axios';
 import Consulta3 from './Consulta3.vue'
@@ -228,6 +238,7 @@ return {
 
 
             ],
+
             headersDeudas: [
                 {
                     align: "start",
@@ -246,9 +257,29 @@ return {
 
 
             ],
+            headersPendientes: [
+                {
+                    align: "start",
+                    key: "name",
+                    sortable: false,
+                },
+                { key: "id", title: "Id Alumno" },
+                { key: "nombre_alumno", title: "Alumno" },
+                { key: "Diplomado", title: "Diplomado" },
+                { key: "Fecha", title: "Fechas de Pago" },
+                { key: "costo_total", title: "Costo Diplomado" },
+                { key: "TotaldePagos", title: "Total de Colegiaturas" },
+                { key: "monto_inscripcion", title: "Inscripcion" },
+                { key: "Saldo_Pendiente", title: "Saldo_Pendiente" },
+
+
+
+            ],
 
             search:"",
-                pagosAbonosNetos:[]
+                pagosAbonosNetos:[],
+                pagosPendientesNetos:[]
+
 }
 
     },
@@ -268,6 +299,19 @@ methods:{
 
     },
 
+
+    obtenerAlumnos_Abonos_Pendientes(){
+
+axios.get('/api/v1/pagospendientes/api2024H')
+.then(res => {
+    this.pagosPendientesNetos = res.data.pagosPendientesNetos;
+    console.log('pendiente pagar',res)
+})
+.catch(err => {
+    console.error(err);
+})
+
+},
     obtenerSumaInscripcion(){
         axios.get('/api/v1/inscripciones/recaudacion/suma')
       .then(response => {
@@ -286,7 +330,7 @@ methods:{
           data: {
             labels: etiquetas,
             datasets: [{
-              label: 'Total Pagado por Inscritos',
+              label: 'Total Pagado por Inscritos $',
               data: totalesPagados,
               backgroundColor: 'rgb(240, 128, 128)', // Color de fondo de las barras
         borderColor: 'rgba(75, 192, 192, 1)', // Color del borde de las barras
@@ -316,6 +360,7 @@ methods:{
 
         this.obtenerAlumnos_Abonos_Pagados();
         this.obtenerSumaInscripcion();
+        this.obtenerAlumnos_Abonos_Pendientes();
 
         axios.get('api/v1/pagosmensualidatestotal/api2024G')
   .then(response => {
@@ -332,7 +377,7 @@ methods:{
       data: {
         labels: etiquetas,
         datasets: [{
-          label: 'Total Pagado',
+          label: 'Total Pagado $',
           data: totalesPagados,
           backgroundColor: '#3D9970', // Color de las barras con efecto 3D
 borderColor: '#2E856E', // Color del borde de las barras
@@ -354,20 +399,8 @@ borderColor: '#2E856E', // Color del borde de las barras
     console.error('Error al obtener los datos de la API:', error);
   });
 
-
-
-
-
-
   }
 
 
 };
 </script>
-<style>
-.chart-container {
-  position: relative;
-  width: 100%;
-  height: 400px; /* Altura inicial del contenedor del gráfico */
-}
-</style>

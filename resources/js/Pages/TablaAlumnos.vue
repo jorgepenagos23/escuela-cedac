@@ -21,7 +21,7 @@ console.log('user id  ',userId);
         <v-col cols="12" sm="8" md="6" lg="4">
           <v-text-field
             v-model="busqueda"
-            label="Buscar por matrícula o nombre"
+            label="Buscar por  o nombre"
             outlined
             dense
             variant="solo"
@@ -73,52 +73,51 @@ console.log('user id  ',userId);
                       <v-card>
                         <v-card-text>
                             <v-card class="mx-auto bg-white dark:bg-gray-800 max-w-full sm:max-w-auto" variant="flat">
-                                <v-sheet color="indigo">
-                                    <v-card-item>
-                                        <template v-slot:prepend>
-                                            <v-card-title>
-                                                <v-icon icon=" mdi-account-circle" start></v-icon>
 
-                                                {{ alumnos.nombre_completo }}
-                                            </v-card-title>
-                                        </template>
+                                <v-sheet color="indigo" class="py-2 px-4">
+                                    <v-card-item class="flex-wrap">
+                                      <template v-slot:prepend>
+                                        <v-card-title class="flex items-center justify-start sm:justify-between w-full sm:w-auto">
+                                          <v-icon icon="mdi-account-circle" start class="mr-2"></v-icon>
+                                          <span class="text-body-1">{{ alumnos.nombre_completo }}</span>
+                                        </v-card-title>
+                                      </template>
 
-                                        <v-divider class="mx-2" vertical></v-divider>
+                                      <v-divider class="my-2 sm:mx-2" vertical></v-divider>
 
-                                        <template v-slot:append>
-                                            <v-btn class="ms-4 text-none text-subtitle-1"
-                                                color="red" size="small" variant="flat">
-                                                Pendiente {{ alumnos.Pendiente_Pagar }}
-                                            </v-btn>
-                                        </template>
+                                      <template v-slot:append>
+                                        <v-btn class="ms-0 sm:ms-4 text-none text-body-1 mt-2 sm:mt-0" color="red" size="small" variant="flat">
+                                          Pendiente ${{ alumnos.Pendiente_Pagar }}
+                                        </v-btn>
+                                      </template>
                                     </v-card-item>
-                                </v-sheet>
+                                  </v-sheet>
 
                                 <v-card class="m-4 bg-blue-gray-800 rounded-lg" variant="flat">
                                   <v-card-item>
                                     <v-card-title class="text-base md:text-lg lg:text-xl xl:text-2xl font-semibold text-gray-200 dark:text-gray-300 flex flex-col sm:flex-row items-center justify-center sm:justify-start">
-                                      <div class="flex flex-col sm:flex-row items-center sm:items-start">
-                                        <v-icon color="#949cf7" icon="mdi-calendar"
-                                        start></v-icon>
 
-                                    <span class="text-medium-emphasis font-weight-bold">
-                                        Fecha de Inscripcion:
-                                        {{ alumnos.fecha_inscripcion }} </span>
+                                        <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-4">
+                                            <v-icon color="#949cf7" icon="mdi-calendar" start></v-icon>
 
-                                        <v-spacer></v-spacer>
-                                        <v-chip color="primary" variant="flat"
-                                        prepend-icon="mdi-account-multiple"  >
-                                            Campaña {{ alumnos.campaña }}
-                                          </v-chip>
+                                            <span class="text-medium-emphasis font-weight-bold text-sm sm:text-base">
+                                              Fecha de Inscripcion: {{ alumnos.fecha_inscripcion }}
+                                            </span>
 
-                                          <v-chip color="primary" variant="flat"
-                                          prepend-icon="mdi-account-multiple"  >
-                                          Grupo {{ alumnos.grupo }}
-                                                  </v-chip>
-                                      </div>
+                                            <v-spacer class="hidden sm:block"></v-spacer>
+
+                                            <v-chip class="w-full sm:w-auto" color="primary" variant="flat" prepend-icon="mdi-account-multiple">
+                                              Campaña {{ alumnos.campaña }}
+                                            </v-chip>
+
+                                            <v-chip class="w-full sm:w-auto" color="primary" variant="flat" prepend-icon="mdi-account-multiple">
+                                              Grupo {{ alumnos.grupo }}
+                                            </v-chip>
+                                          </div>
+
                                       <div class="flex flex-col sm:flex-row items-center sm:items-start mt-2 sm:mt-0 sm:ml-4">
                                         <v-chip color="green" variant="flat">    {{ alumnos.nombre_diplomado }}</v-chip>
-                                        <v-chip color="red" variant="flat">  $   {{ alumnos.monto_inscripcion }}</v-chip>
+                                        <v-chip color="indigo" variant="flat">  Inscripcion   ${{ alumnos.monto_inscripcion }}</v-chip>
                                       </div>
                                     </v-card-title>
                                     <v-container>
@@ -127,6 +126,9 @@ console.log('user id  ',userId);
                                           <v-card class="bg-white dark:bg-gray-900 shadow-md rounded-lg">
                                             <v-card-title></v-card-title>
                                             <v-card-text class="p-4">
+                                                <p class="text-red-800 font-medium">
+                                                    Pagos realizado
+                                                      </p>
                                               <div class="flex justify-between items-center mb-2">
                                                 <div class="text-green-600 dark:text-green-400 text-lg font-semibold">${{ pago.pago_colegiatura }} MXN</div>
                                                 <span class="text-sm font-semibold text-gray-600 dark:text-gray-300">Fecha de Pago : {{ pago.Fecha_PrimerContacto }}</span>
@@ -195,12 +197,17 @@ console.log('user id  ',userId);
                                     <v-text-field label="Fecha de Inscripción" required readonly color="black" v-model="fecha_inscripcion" type="date" variant="outlined" class="w-full px-4 py-2"></v-text-field>
                                   </div>
                                 </div>
-                                <div class="mt-4">
-                                  <v-btn class="mb-8" color="green" size="large" variant="elevated" type="submit" block>Enviar</v-btn>
-                                  <button class="middle none center mr-4 rounded-lg bg-red-500 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-red-500/20 transition-all hover:shadow-lg hover:shadow-red-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none" data-ripple-light="true">
-                                    Vaciar
-                                  </button>
+
+
+                            <div class="flex items-start mb-6">
+                                <div class="flex items-center h-5">
+                                    <input id="remember" type="checkbox" value="" class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800" required>
                                 </div>
+                                <label for="remember" class="ml-2 text-sm text-gray-900 dark:text-gray-400">Los datos ingresados son correctos.</label>
+                            </div>
+                                    <v-btn color="green" size="large" variant="elevated" type="submit" prepend-icon="mdi-send">Enviar</v-btn>
+                                    <v-btn @click="limpiarFormulario" color="red" size="large" variant="elevated" prepend-icon="mdi-eraser">Vaciar</v-btn>
+
                               </form>
 
 
@@ -227,6 +234,28 @@ console.log('user id  ',userId);
 
 
 <style scoped>
+@media (max-width: 639px) {
+    .text-sm {
+      font-size: 0.875rem; /* Tailwind text-sm */
+    }
+
+    .w-full {
+      width: 100%;
+    }
+  }
+
+.v-card-item {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+  }
+
+  @media (min-width: 640px) {
+    .v-card-item {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
 .custom-list-item {
   border-radius: 8px;
   margin: 10px;
@@ -325,6 +354,13 @@ export default {
 },
 
   methods: {
+    limpiarFormulario() {
+
+            this.pago_colegiatura = '';
+            this.selectedTitular = null;
+            this.monto_inscripcion = '';
+            this.fecha_primer_pago_colegiatura = '';
+        },
 
   EnviarPago ()  {
     const page = usePage()
@@ -356,10 +392,9 @@ console.log('user id  ',userId);
         this.fecha_inscripcion='';
         this.selectedTitular='';
         this.obtenerListaAlumnos();
-
       })
       .catch((err) => {
-        swal("Error");
+        swal("Llenar completamente el formuluario");
         console.error(err);
       });
   },

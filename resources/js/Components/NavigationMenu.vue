@@ -13,7 +13,7 @@
                   prepend-icon="mdi-school"
                   title="Admisiones"
                   width="auto"
-                  color="blue-darken-3"
+                  color="indigo"
                 >
                   <v-card
                     class="mx-auto"
@@ -54,8 +54,7 @@
                   prepend-icon="mdi-school"
                   title="Seguimiento Tutoria"
                   width="auto"
-                  color="deep-orange
-                  "
+                  color="indigo"
                 >
                   <v-card
                     class="mx-auto"
@@ -95,9 +94,7 @@
                   prepend-icon="mdi-school"
                   title="Pagos de  Colegiaturas"
                   width="auto"
-                  color="deep-purple-accent-3
-
-                    "
+                  color="indigo"
                 >
                   <v-card
                     class="mx-auto"
@@ -130,6 +127,7 @@
                 </v-card>
               </v-col>
             </v-row>
+
             <v-row align="center" justify="center" dense>
               <v-col cols="12" md="6">
                 <v-card
@@ -137,7 +135,7 @@
                   prepend-icon="mdi-school"
                   title="Consultar Colegiaturas"
                   width="auto"
-                  color="teal  "
+                  color="indigo"
                 >
                   <v-card
                     class="mx-auto"
@@ -170,84 +168,90 @@
                 </v-card>
               </v-col>
             </v-row>
+
             <v-row align="center" justify="center" dense>
-              <v-col cols="12" md="6">
-                <v-card
-                  class="mx-auto"
-                  prepend-icon="mdi-chart-areaspline"
-                  title="Resumen"
-                  width="auto"
-                  color="white
-                "
-                >
-                  <v-row align="left" justify="left" dense>
-                    <v-col cols="5" md="12">
-                      <v-card
-                        subtitle="Reportes y Estadisticas "
-                        title="Estadisticas"
-                        color="  "
-                      >
-                        <template v-slot:prepend>
-                          <v-avatar class="me- mt-2" rounded="0" size="78">
+                <v-col cols="12" md="6">
+                  <v-card
+                    class="mx-auto"
+                    prepend-icon="mdi-school"
+                    title="Resumen"
+                    width="auto"
+                    color="indigo  "
+                  >
+                    <v-card
+                      class="mx-auto"
+                      subtitle="Por fechas"
+                      title="Estadisticas "
+                      color=" "
+                    >
+                      <template v-slot:prepend>
+                        <v-avatar class="me- mt-2" rounded="0" size="78">
                             <v-img
-                              src="https://cdn1.iconfinder.com/data/icons/social-messaging-ui-black-shapers/3/60-512.png"
-                              cover
-                              :with="300"
-                            ></v-img>
-                          </v-avatar>
-                        </template>
-                        <template v-slot:append>
-                          <v-btn
-                            link
-                            href="/resumen"
-                            append-icon="mdi-chevron-right"
-                            color="blue-grey-darken-1                                            "
-                            text="Acceder"
-                            variant="elevated"
-                            block
-                          ></v-btn>
-                        </template>
+                            src="https://cdn1.iconfinder.com/data/icons/social-messaging-ui-black-shapers/3/60-512.png"
+                            cover
+                            :with="300"
+                          ></v-img>
+                        </v-avatar>
+                      </template>
+                      <template v-slot:append>
+                        <v-btn
+                          link
+                          href="/resumen"
+                          append-icon="mdi-chevron-right"
+                          color="blue-grey-darken-1"
+                          text="Acceder"
+                          variant="elevated"
+                          block
+                        ></v-btn>
+                      </template>
+                      <v-card-text> </v-card-text>
+                    </v-card>
+                  </v-card>
+                </v-col>
+              </v-row>
 
-                        <v-card-text>Estadisticas</v-card-text>
-                      </v-card>
-                    </v-col>
-                  </v-row>
-                </v-card>
-              </v-col>
-            </v-row>
+              <v-row align="center" justify="center" dense>
+                <v-col cols="12" md="6">
+                  <v-card
+                    class="mx-auto"
+                    prepend-icon="mdi-school"
+                    title="Diplomados"
+                    width="auto"
+                    color="indigo  "
+                  >
+                    <v-card
+                      class="mx-auto"
+                      subtitle="Diplomados"
+                      title="Diplomados "
+                      color=" "
+                    >
+                      <template v-slot:prepend>
+                        <v-avatar class="me- mt-2" rounded="0" size="78">
+                            <v-img
+                            src="https://cdn3d.iconscout.com/3d/premium/thumb/document-folder-8578222-6805130.png"
+                            cover
+                            :with="300"
+                          ></v-img>
+                        </v-avatar>
+                      </template>
+                      <template v-slot:append>
+                        <v-btn
+                          link
+                          href="/diplomados"
+                          append-icon="mdi-chevron-right"
+                          color="blue-grey-darken-1"
+                          text="Acceder"
+                          variant="elevated"
+                          block
+                        ></v-btn>
+                      </template>
+                      <v-card-text> </v-card-text>
+                    </v-card>
+                  </v-card>
+                </v-col>
+              </v-row>
 
-            <v-row align="center" justify="center" dense>
-              <v-col cols="12" md="6">
-                <v-card
-                  class="mx-auto"
-                  subtitle="Panel de Diplomados"
-                  title="Diplomados"
-                  color="blue-darken-3   "
-                >
-                  <template v-slot:prepend>
-                    <v-avatar class="me- mt-2" rounded="0" size="78">
-                      <v-img
-                        src="https://cdn3d.iconscout.com/3d/premium/thumb/document-folder-8578222-6805130.png"
-                        cover
-                        :with="300"
-                      ></v-img>
-                    </v-avatar>
-                  </template>
-                  <template v-slot:append>
-                    <v-btn
-                      link
-                      href="/diplomados"
-                      append-icon="mdi-chevron-right"
-                      color="blue-grey-darken-1"
-                      text="Acceder"
-                      variant="elevated"
-                      block
-                    ></v-btn>
-                  </template>
-                  <v-card-text>Diplomados </v-card-text>
-                </v-card>
-              </v-col>
-            </v-row>
+
           </div>
         </v-main>
       </v-layout>

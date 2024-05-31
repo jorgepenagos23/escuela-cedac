@@ -25,7 +25,7 @@
           <div class="bg-lime-200 p-4 rounded-lg shadow-lg">
             <h3 class="text-xl font-bold mb-2">{{ producto.Diplomado }}</h3>
             <div class="text-green-800 text-lg font-semibold">
-              Colegiaturas : {{ producto.TotalPagadoAbono }} MXN
+              Colegiaturas : {{ formatNumber(producto.TotalPagadoAbono) }} MXN
             </div>
           </div>
         </div>
@@ -39,73 +39,67 @@
     </div>
   </template>
 
+  <script>
+  import swal from 'sweetalert';
 
-<script>
-import swal from 'sweetalert';
+  export default {
 
-export default {
+      data(){
+          return{
+              fechaInicio:null,
+              fechaFin:null,
+              SumaPagos:[]
 
-    data(){
-        return{
-            fechaInicio:null,
-            fechaFin:null,
-            SumaPagos:[]
+          }
 
-        }
+      },
 
-    },
+      created(){
 
-    created(){
-
-    },
-
-
-    components:{
-
-    },
-
-    methods:{
+      },
 
 
-        enviarFecha(){
+      components:{
+
+      },
+
+      methods:{
+
+          formatNumber(number) {
+              // Utiliza toLocaleString para formatear el número con comas
+              return number.toLocaleString();
+          },
+
+          enviarFecha(){
               let  fechaInicio = this.fechaInicio;
-             let   fechaFin =this.fechaFin;
-            console.log('Fecha Inicio',fechaInicio)
-            console.log('Fecha Final',fechaFin)
+              let   fechaFin =this.fechaFin;
+              console.log('Fecha Inicio',fechaInicio)
+              console.log('Fecha Final',fechaFin)
 
+              axios.post('/api/v1/diplomados/fechaconsulta', {
+                  fechaInicio: this.fechaInicio,
+                  fechaFin: this.fechaFin
+              })
+              .then(response => {
+                  this.SumaPagos = response.data.SumaPagos;
+                  console.log('Envio exitoso', response);
+              })
+              .catch(function (error) {
+                  console.log('Error',error);
+              })
+          },
 
-            axios.post('/api/v1/diplomados/fechaconsulta', {
+          recibirDatos(){
+          }
+      }
+  }
+  </script>
 
-                    fechaInicio :this.fechaInicio,
-                    fechaFin :this.fechaFin
-
-            })
-            .then(response=>{
-
-                this.SumaPagos = response.data.SumaPagos;
-                console.log('Envio exitoso', response)
-
-            })
-
-            .catch(function (error) {
-                console.log('Error',error)
-
-
-            })
-        },
-
-        recibirDatos(){
-
-
-        }
-
-
+  <style scoped>
+  /* Estilos para dispositivos móviles */
+  @media (max-width: 640px) {
+    .w-full {
+      width: 100% !important; /* Hacer que los elementos ocupen el ancho completo */
     }
-
-
-}
-</script>
-
-<style>
-
-</style>
+  }
+  </style>

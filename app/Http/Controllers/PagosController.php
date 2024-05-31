@@ -108,40 +108,35 @@ class PagosController extends Controller
 
 
         }
-    public function index()
-    {
-        $pagos = Pagos::select(
-            'pagos_colegiatura.*',
-            'diplomados.nombre as nombre_diplomado',
-            'cuenta_deposito.titular  as Titular',
-            'cuenta_deposito.banco as banco',
-            'cuenta_deposito.numero_cuenta as numero_cuenta',
-            'cuenta_deposito.CLABE as CLABE',
-            'alumno_inscripcion.nombre_alumno as Nombre',
-            'alumno_inscripcion.saldo as saldo',
+        public function index()
+        {
+            $pagos = Pagos::select(
+                'pagos_colegiatura.*',
+                'diplomados.nombre as nombre_diplomado',
+                'cuenta_deposito.titular  as Titular',
+                'cuenta_deposito.banco as banco',
+                'cuenta_deposito.numero_cuenta as numero_cuenta',
+                'cuenta_deposito.CLABE as CLABE',
+                'alumno_inscripcion.nombre_alumno as Nombre',
+                'alumno_inscripcion.saldo as saldo',
+                'users.name as Tutor'
+            )
+                ->join('diplomados', 'pagos_colegiatura.diplomado_id', '=', 'diplomados.id')
+                ->join('cuenta_deposito', 'pagos_colegiatura.cuentadeposito', '=', 'cuenta_deposito.id')
+                ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
+                ->join('users', 'users.id', '=', 'pagos_colegiatura.tutor')
+                ->where('alumno_inscripcion.saldo', '>', 0)
+                ->where('pagos_colegiatura.status', 'activo')
+                ->orderBy('pagos_colegiatura.Fecha_PrimerContacto', 'desc') // Cambio a 'desc'
+                ->get();
 
-            'users.name as Tutor',
-)
-        ->join('diplomados','pagos_colegiatura.diplomado_id','=','diplomados.id')
-        ->join('cuenta_deposito','pagos_colegiatura.cuentadeposito','=','cuenta_deposito.id')
-        ->join('alumno_inscripcion','alumno_inscripcion.id','=','pagos_colegiatura.alumno_id')
-        ->join('users','users.id','=','pagos_colegiatura.tutor')
-        ->where('alumno_inscripcion.saldo', '>', 0)
-        ->where('pagos_colegiatura.status', 'activo')
-        ->orderBy('pagos_colegiatura.Fecha_PrimerContacto','asc')
-        ->get();
+            return response()->json(
+                [
+                    'PagosconMensualidades' => $pagos
+                ]
+            );
+        }
 
-
-
-        return response()->json(
-
-            [
-                'PagosconMensualidades'=> $pagos
-            ]);
-
-
-
-    }
 
     public function sumaPagos()
     {
@@ -177,8 +172,10 @@ class PagosController extends Controller
 
 
 
+
             public function AlumnosAbonosTotalesporPeriodo(){
                 $AlumnosPagosPendientes = Pagos::select(
+
                     "diplomados.id as id_Diplomado",
                     "diplomados.nombre as Diplomado",
                     DB::raw('COUNT(pagos_colegiatura.Fecha_PrimerContacto) as TotaldePagos'), // Contar el número de fechas
@@ -197,6 +194,8 @@ class PagosController extends Controller
                 })
                 ->groupBy("diplomados.id", "alumno_inscripcion.monto_inscripcion", "alumno_inscripcion.nombre_alumno", 'alumno_inscripcion.saldo') // Agrupar por ID de diplomado, monto de inscripción y nombre del alumno
                 ->orderByDesc('Totalpago_colegiatura')
+                ->where('alumno_inscripcion.saldo','>0')
+
                 ->get();
 
                 // Convertir el campo costo_total a formato numérico sin decimales
@@ -210,6 +209,44 @@ class PagosController extends Controller
                 ]);
 
 
+            }
+
+            public function AlumnosPendientes(){
+                $pagosPendientesNetos = Pagos::select(
+
+                    "diplomados.id as id_Diplomado",
+                    "diplomados.nombre as Diplomado",
+                    DB::raw('COUNT(pagos_colegiatura.Fecha_PrimerContacto) as TotaldePagos'), // Contar el número de fechas
+                    DB::raw('GROUP_CONCAT(pagos_colegiatura.pago_colegiatura) as FechasColegiaturas'),
+                    DB::raw('GROUP_CONCAT(pagos_colegiatura.Fecha_PrimerContacto) as Fecha'),
+                    'diplomados.costo_total', // Obtener el precio del diplomado sin raw
+                    'alumno_inscripcion.monto_inscripcion',
+                    DB::raw('SUM(pagos_colegiatura.pago_colegiatura) as Totalpago_colegiatura'),
+                    'alumno_inscripcion.saldo as Saldo_Pendiente',
+                    'alumno_inscripcion.nombre_alumno' ,
+                    'alumno_inscripcion.id'
+                    // Obtener el nombre del alumno
+                )
+                ->join("diplomados", "diplomados.id", "=", "pagos_colegiatura.diplomado_id")
+                ->join("alumno_inscripcion", function ($join) {
+                    $join->on("alumno_inscripcion.diplomado_id", "=", "diplomados.id")
+                         ->on("alumno_inscripcion.id", "=", "pagos_colegiatura.alumno_id"); // Agregar unión con la tabla alumno_inscripcion
+                })
+                ->groupBy("diplomados.id", "alumno_inscripcion.monto_inscripcion", "alumno_inscripcion.nombre_alumno", 'alumno_inscripcion.saldo' , 'alumno_inscripcion.id') // Agrupar por ID de diplomado, monto de inscripción y nombre del alumno
+                ->orderByDesc('Totalpago_colegiatura')
+                ->where('alumno_inscripcion.saldo', '>', 0) // Filtro para obtener saldos mayores a cero
+
+                ->get();
+
+                // Convertir el campo costo_total a formato numérico sin decimales
+                $pagosPendientesNetos->transform(function ($item) {
+                    $item->costo_total = (float) $item->costo_total;
+                    return $item;
+                });
+
+                return response()->json([
+                    'pagosPendientesNetos' => $pagosPendientesNetos
+                ]);
             }
 
 
@@ -266,55 +303,56 @@ class PagosController extends Controller
 
     }
 
-  public function directorio(Request $request) {
-    $AlumnosEstadoPagar = Pagos::select(
-            'alumno_inscripcion.id as alumno_id',
-            'alumno_inscripcion.nombre_alumno as nombre_completo',
-            'alumno_inscripcion.saldo as Pendiente_Pagar',
-            'alumno_inscripcion.fecha_inscripcion as fecha_inscripcion',
-            'alumno_inscripcion.monto_inscripcion as monto_inscripcion',
-            'alumno_inscripcion.grupo_campa as grupo_campa',
-            'grupo_campañas.campaña as campaña',
-            'grupo_campañas.grupo as grupo',
-            'diplomados.nombre as nombre_diplomado',
-            'diplomados.id as diplomado_id',
-            'alumno_inscripcion.created_at as created_at',
-            'alumno_inscripcion.updated_at as updated_at'
-            // Agregar los campos adicionales aquí
-        )
-        ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
-        ->join('users', 'users.id', '=', 'alumno_inscripcion.tutor')
-        ->join('users as tutores', 'tutores.id', '=', 'alumno_inscripcion.asesor')
-        ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
-        ->join('grupo_campañas', 'grupo_campañas.id', '=', 'alumno_inscripcion.grupo_campa')
-        ->join('cuenta_deposito', 'alumno_inscripcion.cuentadeposito', '=', 'cuenta_deposito.id')
-   //     ->where('alumno_inscripcion.saldo', '>', 0)
-        ->groupBy(
-            'alumno_inscripcion.id',
-            'alumno_inscripcion.nombre_alumno',
-            'alumno_inscripcion.saldo',
-            'alumno_inscripcion.fecha_inscripcion',
-            'alumno_inscripcion.grupo_campa',
-            'grupo_campañas.campaña',
-            'grupo_campañas.grupo',
-            'diplomados.nombre',
-            'cuenta_deposito.titular',
-            'cuenta_deposito.banco',
-            'cuenta_deposito.numero_cuenta',
-            'cuenta_deposito.CLABE',
-            'users.name',
-            'tutores.name',
-            'alumno_inscripcion.created_at',
-            'alumno_inscripcion.updated_at'
-        )
-        ->get();
+    public function directorio(Request $request) {
+        $AlumnosEstadoPagar = Pagos::select(
+                'alumno_inscripcion.id as alumno_id',
+                'alumno_inscripcion.nombre_alumno as nombre_completo',
+                'alumno_inscripcion.saldo as Pendiente_Pagar',
+                'alumno_inscripcion.fecha_inscripcion as fecha_inscripcion',
+                'alumno_inscripcion.monto_inscripcion as monto_inscripcion',
+                'alumno_inscripcion.grupo_campa as grupo_campa',
+                'grupo_campañas.campaña as campaña',
+                'grupo_campañas.grupo as grupo',
+                'diplomados.nombre as nombre_diplomado',
+                'diplomados.id as diplomado_id',
+                'alumno_inscripcion.created_at as created_at',
+                'alumno_inscripcion.updated_at as updated_at'
+                // Agregar los campos adicionales aquí
+            )
+            ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
+            ->join('users', 'users.id', '=', 'alumno_inscripcion.tutor')
+            ->join('users as tutores', 'tutores.id', '=', 'alumno_inscripcion.asesor')
+            ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
+            ->join('grupo_campañas', 'grupo_campañas.id', '=', 'alumno_inscripcion.grupo_campa')
+            ->join('cuenta_deposito', 'alumno_inscripcion.cuentadeposito', '=', 'cuenta_deposito.id')
+            ->where('alumno_inscripcion.saldo', '>', 0)
+            ->groupBy(
+                'alumno_inscripcion.id',
+                'alumno_inscripcion.nombre_alumno',
+                'alumno_inscripcion.saldo',
+                'alumno_inscripcion.fecha_inscripcion',
+                'alumno_inscripcion.grupo_campa',
+                'grupo_campañas.campaña',
+                'grupo_campañas.grupo',
+                'diplomados.nombre',
+                'cuenta_deposito.titular',
+                'cuenta_deposito.banco',
+                'cuenta_deposito.numero_cuenta',
+                'cuenta_deposito.CLABE',
+                'users.name',
+                'tutores.name',
+                'alumno_inscripcion.created_at',
+                'alumno_inscripcion.updated_at'
+            )
+            ->orderBy('alumno_inscripcion.created_at', 'desc') // Cambio a 'desc'
+            ->get();
 
-    return response()->json([
-        'AlumnosEstadoPagar' => $AlumnosEstadoPagar,
-        'mesagge' => 'Exito en consulta',
-        'code' => 200,
-    ]);
-}
+        return response()->json([
+            'AlumnosEstadoPagar' => $AlumnosEstadoPagar,
+            'mesagge' => 'Exito en consulta',
+            'code' => 200,
+        ]);
+    }
 
     /**
      * Display

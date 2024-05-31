@@ -13,15 +13,14 @@ console.log('user id', userId);
         <!-- Contenido de tu vista -->
         <div class="max-w-4xl mx-auto p-4 lg:p-6">
             <Head title="Cedac" />
-                <template >
-                    <v-toolbar title="Formulario de Inscripción de Matricula" color="light-blue-darken-4">
+
+                    <v-toolbar title="Formulario de Inscripción " color="light-blue-darken-4">
                         <v-toolbar-items>
-                            <v-btn>Generar Ficha</v-btn>
                         </v-toolbar-items>
                         <v-divider class="mx-2" vertical></v-divider>
-                        <v-btn icon="mdi-dots-vertical"></v-btn>
+                        <v-btn>Generar Ficha</v-btn>
                     </v-toolbar>
-                </template>
+
 
                 <v-container>
                     <div class="leading-loose">
@@ -78,6 +77,7 @@ console.log('user id', userId);
                                 <v-btn color="green" size="large" variant="elevated" type="submit" prepend-icon="mdi-send">Enviar</v-btn>
                                 <v-btn @click="limpiarFormulario" color="red" size="large" variant="elevated" prepend-icon="mdi-eraser">Vaciar</v-btn>
                             </div>
+
                         </form>
                     </div>
                 </v-container>

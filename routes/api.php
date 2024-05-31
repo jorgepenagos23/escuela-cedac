@@ -53,6 +53,7 @@ Route::get('/v1/pagosmensualidatestotal/api2024G', [PagosController::class, 'sum
 
 Route::get('/v1/pagosmensualidadespendientes/api2024H', [PagosController::class, 'AlumnosAbonosTotalesporPeriodo']); // LISTAR EL TOTAL DE COLEGIATURAS MAS INSCRIPCION POR ALUMNO SIN FECHA
 
+Route::get('/v1/pagospendientes/api2024H', [PagosController::class, 'AlumnosPendientes']); // LISTAR EL TOTAL DE COLEGIATURAS MAS INSCRIPCION POR ALUMNO SIN FECHA
 
 
 Route::get('/v1/historial/alumno/', [PagosController::class, 'historialAlumno']);

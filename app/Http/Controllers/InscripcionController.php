@@ -39,28 +39,30 @@ class InscripcionController extends Controller
         $AlumnosConInscripciones = Inscripcion::select(
             'alumno_inscripcion.*',
             'diplomados.nombre as nombre_diplomado',
-            'cuenta_deposito.titular  as Titular',
+            'cuenta_deposito.titular as Titular',
             'cuenta_deposito.banco as banco',
             'cuenta_deposito.numero_cuenta as numero_cuenta',
             'cuenta_deposito.CLABE as CLABE',
             'cuenta_deposito.banco as Banco',
 
             'users.name as Tutor',
-            'tutores.name as Asesor' // Añade esta línea para obtener el nombre de otro usuario
+            'tutores.name as Asesor'
         )
         ->join('users', 'users.id', '=', 'alumno_inscripcion.tutor')
-        ->join('users as tutores', 'tutores.id', '=', 'alumno_inscripcion.asesor') // Cambia 'otro_usuario_id' por el nombre correcto de la columna
+        ->join('users as tutores', 'tutores.id', '=', 'alumno_inscripcion.asesor')
         ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
         ->join('cuenta_deposito', 'alumno_inscripcion.cuentadeposito', '=', 'cuenta_deposito.id')
-        ->where('alumno_inscripcion.saldo','>',0)
+        ->where('alumno_inscripcion.saldo', '>', 0)
+        ->orderBy('alumno_inscripcion.created_at', 'desc') // Cambio a 'desc'
         ->get();
 
         return response()->json([
-            'alumnos_inscripcion'=> $AlumnosConInscripciones,
-            'mesagge'=>'Exito en consulta ',
-            'code'=> 200,
+            'alumnos_inscripcion' => $AlumnosConInscripciones,
+            'mesagge' => 'Exito en consulta',
+            'code' => 200,
         ]);
     }
+
 
     public function index2() /// listar para pagos mensualidades
     {

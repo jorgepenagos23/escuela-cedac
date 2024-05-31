@@ -115,11 +115,17 @@ class DatabaseSeeder extends Seeder
         ]);
         \App\Models\CuentadeDeposito::create([
             'titular' => 'MARIO CESAR',
-            'CLABE' => '',
+            'CLABE' => '8409',
             'banco' => 'SPIN',
             'numero_cuenta' => '2119',
         ]);
 
+        \App\Models\CuentadeDeposito::create([
+            'titular' => 'MARIO CESAR',
+            'CLABE' => '',
+            'banco' => 'SPIN',
+            'numero_cuenta' => '',
+        ]);
 
         \App\Models\CuentadeDeposito::create([
             'titular' => 'JUAN CARLOS',
