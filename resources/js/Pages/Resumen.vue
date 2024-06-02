@@ -94,15 +94,103 @@ import Consulta3 from "./Consulta3.vue";
                         <v-btn
                           v-bind="activatorProps"
                           color="indigo"
-                          text="Consulta por Fechas "
+                          text=" Colegiaturas Pendientes"
                           variant="flat"
                           prepend-icon="mdi-chart-box-multiple-outline"
                         ></v-btn>
                       </template>
 
                       <template v-slot:default="{ isActive }">
-                        <v-card title="Consulta por fechas">
+                        <v-card title="Alumnos Saldo Pendiente">
                           <v-card-text>
+                            <div class="bg-blue-500 border border-blue-400 text-white px-4 py-3 rounded relative" role="alert">
+                                <strong class="font-bold"></strong>
+                                <span class="block sm:inline">Buscar alumno</span>
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                  <!-- Barra de búsqueda -->
+                                  <input v-model="search" type="text" class="border border-gray-300 rounded-md py-1 px-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm" placeholder="Buscar...">
+
+                                  <!-- Filtro por diplomado -->
+                                  <select v-model="selectedDiplomado" class="ml-2 border border-gray-300 rounded-md py-1 px-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 block w-48 sm:text-sm">
+                                    <option value="">Todos los diplomados</option>
+                                    <!-- Aquí puedes iterar sobre tus opciones de diplomados -->
+                                    <option v-for="diplomado in listaDiplomados" :key="diplomado.id" :value="diplomado.id">{{ diplomado.nombre_diplomado }}</option>
+                                </select>
+                                </div>
+                              </div>
+
+                              <div class="flex flex-col mt-6">
+                                <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                                  <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                                    <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                      <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                          <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                              Alumno
+                                            </th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                              Diplomado
+                                            </th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                              Colegiaturas Realizadas
+                                            </th>
+
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Saldo Pendiente por pagar
+                                              </th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                              Colegiaturas
+                                            </th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                              Fechas de Pago Colegiaturas
+                                            </th>
+
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Costo Diplomado
+                                              </th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                              Inscripción
+                                            </th>
+                                          </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                          <tr v-for="(item, index) in filteredItems" :key="index">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                              <div class="text-sm text-gray-900">{{ item.nombre_alumno }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                              <div class="text-sm text-gray-900">{{ item.Diplomado }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                              <div class="text-sm text-gray-900">{{ item.TotaldePagos }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-red-900">${{ item.Saldo_Pendiente }}</div>
+                                              </td>
+
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                              <div class="text-sm text-gray-900">{{ item.FechasColegiaturas }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                              <div class="text-sm text-gray-900">{{ item.Fecha }}</div>
+                                            </td>
+
+
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">${{ item.costo_total }}</div>
+                                              </td>
+
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                              <div class="text-sm text-gray-900">${{ item.monto_inscripcion }}</div>
+                                            </td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
 
                           </v-card-text>
 
@@ -127,7 +215,65 @@ import Consulta3 from "./Consulta3.vue";
 
         </template>
 
+        
         <div class="max-w-7xl mx-auto p-6 lg:p-8">
+            <div class="grid grid-cols-1 gap-5 mt-6 sm:grid-cols-2 lg:grid-cols-4">
+
+                  <div class="p-4 transition-shadow border rounded-lg shadow-sm hover:shadow-lg">
+                    <div class="flex items-start justify-between">
+                      <div class="flex flex-col space-y-2">
+                        <span class="text-gray-400">Matriculas Activas</span>
+                        <span class="text-lg font-semibold">100,221</span>
+                      </div>
+                      <div class="p-10 bg-gray-200 rounded-md"></div>
+                    </div>
+                    <div>
+                      <span class="inline-block px-2 text-sm text-white bg-green-300 rounded"> 14%</span>
+                      <span></span>
+                    </div>
+                  </div>
+                  <div class="p-4 transition-shadow border rounded-lg shadow-sm hover:shadow-lg">
+                    <div class="flex items-start justify-between">
+                      <div class="flex flex-col space-y-2">
+                        <span class="text-gray-400">Diplomados</span>
+                        <span class="text-lg font-semibold">100,221</span>
+                      </div>
+                      <div class="p-10 bg-gray-200 rounded-md"></div>
+                    </div>
+                    <div>
+                      <span class="inline-block px-2 text-sm text-white bg-green-300 rounded"> 14%</span>
+                      <span>from 2019</span>
+                    </div>
+                  </div>
+                  <div class="p-4 transition-shadow border rounded-lg shadow-sm hover:shadow-lg">
+                    <div class="flex items-start justify-between">
+                      <div class="flex flex-col space-y-2">
+                        <span class="text-gray-400">Usuarios</span>
+                        <span class="text-lg font-semibold">100,221</span>
+                      </div>
+                      <div class="p-10 bg-gray-200 rounded-md"></div>
+                    </div>
+                    <div>
+                      <span class="inline-block px-2 text-sm text-white bg-green-300 rounded"> 14%</span>
+                      <span>from 2019</span>
+                    </div>
+                  </div>
+                  <div class="p-4 transition-shadow border rounded-lg shadow-sm hover:shadow-lg">
+                    <div class="flex items-start justify-between">
+                      <div class="flex flex-col space-y-2">
+                        <span class="text-gray-400">Inscripciones</span>
+                        <span class="text-lg font-semibold">100,221</span>
+                      </div>
+                      <div class="p-10 bg-gray-200 rounded-md"></div>
+                    </div>
+                    <div>
+                      <span class="inline-block px-2 text-sm text-white bg-green-300 rounded"> 14%</span>
+                      <span>from 2019</span>
+                    </div>
+                  </div>
+
+              </div>
+
 
 
             <v-card class="mt-6">
@@ -150,8 +296,8 @@ import Consulta3 from "./Consulta3.vue";
                         </v-card>
                   </v-container>
             </v-card>
-<br><br>
-<v-card class="mt-6">
+
+            <v-card class="mt-6">
 
             <v-toolbar title="Recaudo de Inscripciones por Diplomado  (por MES  ) " color="blue-darken-4
             ">
@@ -170,32 +316,9 @@ import Consulta3 from "./Consulta3.vue";
         </v-card>
 
 
-        <v-card color="blue " flat>
-            <v-toolbar title=" Alumnos Saldo Pendiente" color="red">
-                <v-toolbar-items> </v-toolbar-items>
-
-                <v-divider class="mx-2" vertical></v-divider>
-
-                <v-btn icon="mdi-dots-vertical"></v-btn>
-              </v-toolbar>
-
-            <v-card title="Buscar matricula ">
-
-                <template v-slot:text>
-                    <v-text-field v-model="search" label="Buscar Abonos Netos Alumnos" prepend-inner-icon="mdi-magnify"
-                        variant="outlined" hide-details single-line></v-text-field>
-                </template>
-            </v-card>
-            <v-data-table :headers="headersPendientes" :items="pagosPendientesNetos" :search="search" class=""
 
 
-
-           >
-            </v-data-table>
-
-        </v-card>
-
-</div>
+        </div>
 
 
 
@@ -218,6 +341,7 @@ export default {
     data(){
 return {
         dialog1:false,
+        listaDiplomados: [], // Lista de opciones de diplomados
 
             headers: [
                 {
@@ -283,7 +407,22 @@ return {
 }
 
     },
+    computed: {
+  filteredItems() {
+    // Aplica los filtros según la búsqueda y el diplomado seleccionado
+    let filteredItems = this.pagosPendientesNetos.filter(item => {
+      // Filtra por búsqueda
+      let matchSearch = item.nombre_alumno.toLowerCase().includes(this.search.toLowerCase());
 
+      // Filtra por diplomado si se ha seleccionado uno
+      let matchDiplomado = !this.selectedDiplomado || item.id_Diplomado === this.selectedDiplomado;
+
+      return matchSearch && matchDiplomado;
+    });
+
+    return filteredItems;
+  }
+},
 methods:{
 
     obtenerAlumnos_Abonos_Pagados(){

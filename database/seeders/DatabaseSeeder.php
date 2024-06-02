@@ -90,10 +90,13 @@ class DatabaseSeeder extends Seeder
 
             'nombre' => 'NUEVO CODIGO',
         ]);
+
         \App\Models\Diplomado::create([
 
             'nombre' => 'CUIDADOS DE ENFERMERIA',
         ]);
+
+
 
         \App\Models\CuentadeDeposito::create([
             'titular' => 'MARIO CESAR',
@@ -115,14 +118,14 @@ class DatabaseSeeder extends Seeder
         ]);
         \App\Models\CuentadeDeposito::create([
             'titular' => 'MARIO CESAR',
-            'CLABE' => '8409',
+            'CLABE' => '',
             'banco' => 'SPIN',
             'numero_cuenta' => '2119',
         ]);
 
         \App\Models\CuentadeDeposito::create([
             'titular' => 'MARIO CESAR',
-            'CLABE' => '',
+            'CLABE' => '8409',
             'banco' => 'SPIN',
             'numero_cuenta' => '',
         ]);
@@ -372,7 +375,7 @@ class DatabaseSeeder extends Seeder
             'nombre' => 'JUICIOS ORALES',
             'duracion_mes' => 7,
 
-            'costo_total' => 1000.00,
+            'costo_total' => 7000.00,
         ]);
 
         // Crear GrupoCampaña asociado al Diplomado
