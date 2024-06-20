@@ -9,12 +9,9 @@ import { Head } from "@inertiajs/vue3";
       <Head title="Cedac" />
       <AuthenticatedLayout>
         <template #header>
-          <v-toolbar title="Diplomados" color="indigo">
+          <v-toolbar title=" Agregar Diplomados" color="indigo">
             <v-toolbar-items>
-              <v-btn
 
-              link href="/agregar/diplomado"
-              >Agregar Diplomado</v-btn>
 
             </v-toolbar-items>
 
@@ -33,24 +30,12 @@ import { Head } from "@inertiajs/vue3";
         <v-card color="white " flat>
           <div class="py-0">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-              <v-card title="Barra de Busqueda">
-                <template v-slot:text>
-                  <v-text-field
-                    v-model="search"
-                    label="Buscar diplomados"
-                    prepend-inner-icon="mdi-magnify"
-                    variant="outlined"
-                    hide-details
-                    single-line
-                  ></v-text-field>
-                </template>
-              </v-card>
-              <v-data-table :headers="headers" :items="diplomados" :search="search" class="bg-grey-lighten-4 text-justify ">
-              </v-data-table>
+
 
             </div>
           </div>
         </v-card>
+
       </AuthenticatedLayout>
     </div>
   </div>

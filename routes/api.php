@@ -105,3 +105,7 @@ Route::get('v1/mensualidad/seguimiento', [PagosController::class,'pendientesPaga
 Route::get('/v1/mostrar/alumno/show_sinpago/{id}', [PagosController::class, 'show_sinpago']);
 
 Route::get('v1/listar/asesores', [UsuariosController::class,'listarAsesores']);
+
+
+
+Route::get('/v1/matriculas/activas/2024',[InscripcionController::class, 'MatriculasActivas']);

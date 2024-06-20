@@ -66,13 +66,13 @@ Route::get( '/seguimiento/tutorias', [PagosController::class,'seguimientotutoria
 
 Route::get('v1/dialog/pagos/mensualidades/alumnos', [PagosController::class,'vistaPagosAgregar']);
 
-
+Route::get('/agregar/diplomado' , [DiplomadoController::class,'diplomadosCrud']);
 
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    //Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    //Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 require __DIR__ . '/auth.php';

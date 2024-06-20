@@ -13,6 +13,13 @@ class DiplomadoController extends Controller
      * Display a listing of the resource.
      */
 
+    public function diplomadosCrud(){
+
+        return Inertia::render('AgregarDiplomados');
+
+    }
+
+
      public function sumaDiplomados(){
 
 

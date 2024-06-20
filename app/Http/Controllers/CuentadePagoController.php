@@ -35,7 +35,7 @@ class CuentadePagoController extends Controller
         ]);
     }
 
-
+    
 
 
     public function index()

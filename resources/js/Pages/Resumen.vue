@@ -215,62 +215,43 @@ import Consulta3 from "./Consulta3.vue";
 
         </template>
 
-        
+
         <div class="max-w-7xl mx-auto p-6 lg:p-8">
             <div class="grid grid-cols-1 gap-5 mt-6 sm:grid-cols-2 lg:grid-cols-4">
+                  <div class="p-4 transition-shadow border rounded-lg shadow-sm hover:shadow-lg">
+                    <div class="flex items-start justify-between">
+                      <div class="flex flex-col space-y-2">
+                        <span class="text-black-400 ">Matriculas Activas</span>
+                        <li v-for="(matricula, index ) in matriculasActivas" :key="index">
+                            <span class="inline-block px-2 text-sm text-black bg-green-300 rounded">     Activas: {{ matricula.Activas }}</span>
+                        </li>
+                      </div>
+                      <div class="p-10 bg-gray-200 rounded-md"></div>
+                    </div>
+                    <div>
+                      <span></span>
+                    </div>
+                  </div>
+
+
 
                   <div class="p-4 transition-shadow border rounded-lg shadow-sm hover:shadow-lg">
                     <div class="flex items-start justify-between">
                       <div class="flex flex-col space-y-2">
-                        <span class="text-gray-400">Matriculas Activas</span>
-                        <span class="text-lg font-semibold">100,221</span>
+                        <div v-for="diplomado in DiplomadoNombre" :key="diplomado.id">
+                            <ul class="text-black-400">   {{ diplomado.nombre }}</ul>
+                        </div>
                       </div>
                       <div class="p-10 bg-gray-200 rounded-md"></div>
                     </div>
                     <div>
-                      <span class="inline-block px-2 text-sm text-white bg-green-300 rounded"> 14%</span>
-                      <span></span>
-                    </div>
+                     </div>
                   </div>
-                  <div class="p-4 transition-shadow border rounded-lg shadow-sm hover:shadow-lg">
-                    <div class="flex items-start justify-between">
-                      <div class="flex flex-col space-y-2">
-                        <span class="text-gray-400">Diplomados</span>
-                        <span class="text-lg font-semibold">100,221</span>
-                      </div>
-                      <div class="p-10 bg-gray-200 rounded-md"></div>
-                    </div>
-                    <div>
-                      <span class="inline-block px-2 text-sm text-white bg-green-300 rounded"> 14%</span>
-                      <span>from 2019</span>
-                    </div>
-                  </div>
-                  <div class="p-4 transition-shadow border rounded-lg shadow-sm hover:shadow-lg">
-                    <div class="flex items-start justify-between">
-                      <div class="flex flex-col space-y-2">
-                        <span class="text-gray-400">Usuarios</span>
-                        <span class="text-lg font-semibold">100,221</span>
-                      </div>
-                      <div class="p-10 bg-gray-200 rounded-md"></div>
-                    </div>
-                    <div>
-                      <span class="inline-block px-2 text-sm text-white bg-green-300 rounded"> 14%</span>
-                      <span>from 2019</span>
-                    </div>
-                  </div>
-                  <div class="p-4 transition-shadow border rounded-lg shadow-sm hover:shadow-lg">
-                    <div class="flex items-start justify-between">
-                      <div class="flex flex-col space-y-2">
-                        <span class="text-gray-400">Inscripciones</span>
-                        <span class="text-lg font-semibold">100,221</span>
-                      </div>
-                      <div class="p-10 bg-gray-200 rounded-md"></div>
-                    </div>
-                    <div>
-                      <span class="inline-block px-2 text-sm text-white bg-green-300 rounded"> 14%</span>
-                      <span>from 2019</span>
-                    </div>
-                  </div>
+
+
+
+
+
 
               </div>
 
@@ -299,8 +280,7 @@ import Consulta3 from "./Consulta3.vue";
 
             <v-card class="mt-6">
 
-            <v-toolbar title="Recaudo de Inscripciones por Diplomado  (por MES  ) " color="blue-darken-4
-            ">
+            <v-toolbar title="Recaudo de Inscripciones por Diplomado  (por MES  ) " color="blue-darken-4 ">
                 <v-toolbar-items> </v-toolbar-items>
 
                 <v-divider class="mx-2" vertical></v-divider>
@@ -314,14 +294,7 @@ import Consulta3 from "./Consulta3.vue";
                   </div>
               </v-container>
         </v-card>
-
-
-
-
         </div>
-
-
-
       </AuthenticatedLayout>
     </div>
   </div>
@@ -402,8 +375,9 @@ return {
 
             search:"",
                 pagosAbonosNetos:[],
-                pagosPendientesNetos:[]
-
+                pagosPendientesNetos:[],
+                matriculasActivas:[],
+                DiplomadoNombre:[]
 }
 
     },
@@ -425,6 +399,38 @@ return {
 },
 methods:{
 
+    obtenerDiplomados(){
+
+        axios.get('/api/v1/diplomados/index/2024/diplomados')
+        .then(res => {
+
+            this.DiplomadoNombre = res.data.DiplomadoNombre;
+
+            console.log(res)
+        })
+        .catch(err => {
+            console.error(err);
+        })
+
+
+    },
+
+    obtenerMatriculasActivas(){
+        axios.get('/api/v1/matriculas/activas/2024')
+        .then(res => {
+
+            this.matriculasActivas = res.data.data;
+
+            console.log(res)
+        })
+        .catch(err => {
+            console.error(err);
+        })
+
+
+    },
+
+
     obtenerAlumnos_Abonos_Pagados(){
 
         axios.get('/api/v1/pagosmensualidadespendientes/api2024H')
@@ -437,6 +443,8 @@ methods:{
         })
 
     },
+
+
 
 
     obtenerAlumnos_Abonos_Pendientes(){
@@ -500,6 +508,8 @@ axios.get('/api/v1/pagospendientes/api2024H')
         this.obtenerAlumnos_Abonos_Pagados();
         this.obtenerSumaInscripcion();
         this.obtenerAlumnos_Abonos_Pendientes();
+        this.obtenerMatriculasActivas();
+        this.obtenerDiplomados();
 
         axios.get('api/v1/pagosmensualidatestotal/api2024G')
   .then(response => {

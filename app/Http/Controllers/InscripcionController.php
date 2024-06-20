@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Inscripcion;
+use App\Models\Pagos;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -125,6 +126,27 @@ class InscripcionController extends Controller
         ]);
     }
 
+    public function MatriculasActivas(){
+
+        $matriculaActivas = Pagos::select(
+
+            'pagos_colegiatura.status as status',
+            DB::raw('COUNT(status) as Activas' ),
+
+             )
+             ->where('status','Activo')
+             ->groupBy('pagos_colegiatura.status')
+             ->get();
+
+
+                return response()->json([
+
+                    'data' => $matriculaActivas,
+                    'message' => 'Matriculas Activas Devueltas'
+                ]);
+
+    }
+
 
     public function create()
     {
@@ -179,6 +201,7 @@ class InscripcionController extends Controller
 
 
     }
+
 
     /**
      * Display the specified resource.

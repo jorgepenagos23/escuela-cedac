@@ -28,7 +28,6 @@ const form = useForm({
             <h2 class="text-lg font-medium text-gray-900">Perfil de Usuario</h2>
 
             <p class="mt-1 text-sm text-gray-600">
-                Update your account's profile information and email address.
             </p>
         </header>
 
@@ -41,8 +40,7 @@ const form = useForm({
                     type="text"
                     class="mt-1 block w-full"
                     v-model="form.name"
-                    required
-                    autofocus
+                    readonly
                     autocomplete="name"
                 />
 
@@ -58,6 +56,7 @@ const form = useForm({
                     class="mt-1 block w-full"
                     v-model="form.email"
                     required
+                    readonly
                     autocomplete="username"
                 />
 

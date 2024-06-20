@@ -45,6 +45,7 @@ class Pagos extends Model
                 $inscripcion->saldo -= $pago->pago_colegiatura;
                 $inscripcion->save();
             }
+            
         });
     }
 }
