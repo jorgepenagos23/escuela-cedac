@@ -1,3 +1,62 @@
+APP LARAVEL 10 , VUE , VUETYIFY , MYSQL , AWS 
+
+
+![image](https://github.com/user-attachments/assets/765ce607-02b4-4246-a58a-4552149674ba)
+
+
+LARAVEL BREEZE
+
+![image](https://github.com/user-attachments/assets/8cf1fd13-dc29-49f5-b309-3744497c96b4)
+
+
+DASHBOARD
+
+![image](https://github.com/user-attachments/assets/91555e37-3c42-49aa-8878-5355b869e83b)
+
+
+FORM 
+
+![image](https://github.com/user-attachments/assets/2f0ed028-6997-461d-b8ad-2222300f2676)
+
+TABLES SEARCH 
+
+![image](https://github.com/user-attachments/assets/d48c2bc2-b3dd-4db4-a57d-08259748cc1a)
+
+
+
+REGISTER PAYMENTS 
+![image](https://github.com/user-attachments/assets/a1e8fd61-dca1-421c-b868-c84121502409)
+
+
+ADD NEW CUSTOMER 
+![image](https://github.com/user-attachments/assets/828fd089-f116-4c0e-a3c6-67c7582443e5)
+
+GET DATA SQL 
+
+![image](https://github.com/user-attachments/assets/51b4c395-3ae5-4970-94db-c89abe1091ba)
+
+
+TABLES DATABASE
+![image](https://github.com/user-attachments/assets/7a0276cd-09bd-4ebf-adbd-05af31d98882)
+
+TABLES 
+![image](https://github.com/user-attachments/assets/6291d8c4-c5ee-458a-95a5-9766b6ee9954)
+
+CHART
+![image](https://github.com/user-attachments/assets/eee16fc4-e850-414e-b1a0-8a6f51f67e5f)
+
+
+
+
+
+
+
+
+
+
+
+
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
