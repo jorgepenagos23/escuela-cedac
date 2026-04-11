@@ -7,6 +7,7 @@ use App\Http\Controllers\InscripcionController;
 use App\Http\Controllers\PagosController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UsuariosController;
+use App\Http\Controllers\DescuentoController;
 use App\Models\CuentadeDeposito;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -31,9 +32,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('/v1/alumnos_api2024A', [AlumnoController::class, 'index'])->name('alumnos.index');
 
+Route::get('/v1/alumnos-liquidados', [\App\Http\Controllers\AlumnosLiquidadosController::class, 'getData']);
+Route::get('/v1/alumnos-liquidados/expediente', [\App\Http\Controllers\AlumnosLiquidadosController::class, 'getExpediente']);
 
 Route::get('/v1/usuarios_api2024B', [UsuariosController::class, 'index']); // LISTAR USUARIOS
 Route::get('/v1/diplomados_api2024C', [DiplomadoController::class, 'index']); //LISTAR DIPLOMADOS
+Route::post('/v1/diplomado/crear', [DiplomadoController::class, 'store']); // CREAR DIPLOMADOS
+Route::put('/v1/diplomado/{id}', [DiplomadoController::class, 'update']); // EDITAR DIPLOMADOS
 
 Route::get('/v1/cuentadepository_api2024D', [CuentadePagoController::class, 'index']);  //LISTAR NUMEROS DE CUENTA
 
@@ -55,6 +60,7 @@ Route::get('/v1/pagosmensualidadespendientes/api2024H', [PagosController::class,
 
 Route::get('/v1/pagospendientes/api2024H', [PagosController::class, 'AlumnosPendientes']); // LISTAR EL TOTAL DE COLEGIATURAS MAS INSCRIPCION POR ALUMNO SIN FECHA
 
+Route::get('/v1/pagos/calendario', [PagosController::class, 'getCalendarioPagos']);
 
 Route::get('/v1/historial/alumno/', [PagosController::class, 'historialAlumno']);
 
@@ -73,6 +79,7 @@ Route::get('/v1/cuentadeposito/index/2024/numero', [CuentadePagoController::clas
 
 Route::post('/v1/pagosabonos/crear', [PagosController::class, 'store']);
 Route::post('/v1/inscripcion/crear', [InscripcionController::class, 'store']);
+Route::get('/v1/contabilidad/reporte', [PagosController::class, 'reporteContabilidad']);
 
 Route::get('v1/listar/alumnos/parapagos/', [InscripcionController::class, 'index2']);
 
@@ -109,3 +116,13 @@ Route::get('v1/listar/asesores', [UsuariosController::class,'listarAsesores']);
 
 
 Route::get('/v1/matriculas/activas/2024',[InscripcionController::class, 'MatriculasActivas']);
+
+// ── Cancelación y Reprogramación de Abonos ──────────────────────────────────
+Route::post('/v1/pagos/{id}/cancelar',        [PagosController::class, 'cancelarAbono']);
+Route::get('/v1/alumno/{alumno_id}/plan-pagos',  [PagosController::class, 'getPlanPagos']);
+Route::post('/v1/alumno/{alumno_id}/plan-pagos', [PagosController::class, 'reprogramarPlan']);
+// ── Buscador de Alumnos ───────────────────────────────────────────────────────
+Route::get('/v1/alumnos/buscar',              [InscripcionController::class, 'buscarAlumno']);
+Route::put('/v1/alumnos/{id}/actualizar',     [InscripcionController::class, 'actualizarAlumno']);
+// ── Descuentos vigentes (para admisiones) ─────────────────────────────────
+Route::get('/v1/descuentos/vigentes', [DescuentoController::class, 'vigentes']);

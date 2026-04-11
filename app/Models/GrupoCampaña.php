@@ -12,16 +12,20 @@ class GrupoCampaña extends Model
     protected $fillable = [
             "id",
             "campaña",
+            "grupo",
             "id_diplomado",
+            "tutor_id",
 
 
     ] ;
 
 
     public function diplomado(){
-
-
         return $this->belongsTo(Diplomado::class, 'id_diplomado','id');
+    }
+
+    public function tutor(){
+        return $this->belongsTo(User::class, 'tutor_id', 'id');
     }
 
 

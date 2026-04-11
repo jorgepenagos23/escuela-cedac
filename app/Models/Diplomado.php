@@ -19,6 +19,6 @@ class Diplomado extends Model
     ];
     public function grupoCampañas()
     {
-        return $this->hasMany(GrupoCampaña::class, 'diplomado_id', 'id');
+        return $this->hasMany(GrupoCampaña::class, 'id_diplomado', 'id');
     }
 }

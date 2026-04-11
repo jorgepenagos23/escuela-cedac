@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PagosController extends Controller
 {
@@ -30,22 +31,28 @@ class PagosController extends Controller
     }
 
     public function pendientesPagar(Request $request) {
-        $pendienteMesUser = Inscripcion::leftJoin("pagos_colegiatura", "alumno_inscripcion.id", "=", "pagos_colegiatura.alumno_id")
+        $tutorId = $request->query('tutor_id');
+
+        $query = Inscripcion::leftJoin("pagos_colegiatura", "alumno_inscripcion.id", "=", "pagos_colegiatura.alumno_id")
             ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
-            ->whereNull("pagos_colegiatura.alumno_id")
-            ->select('alumno_inscripcion.id as alumno_id',
-            'alumno_inscripcion.nombre_alumno', 'alumno_inscripcion.fecha_inscripcion',
+            ->whereNull("pagos_colegiatura.alumno_id");
+            
+        if ($tutorId) {
+            $query->where('alumno_inscripcion.tutor', $tutorId);
+        }
+
+        $pendienteMesUser = $query->select(
+            'alumno_inscripcion.id as alumno_id',
+            'alumno_inscripcion.nombre_alumno', 
             'alumno_inscripcion.saldo',
             'alumno_inscripcion.celular',
             'alumno_inscripcion.adicional',
             'alumno_inscripcion.fecha_inscripcion',
             'alumno_inscripcion.monto_inscripcion',
-             'diplomados.nombre as nombre_diplomado',
-             'alumno_inscripcion.diplomado_id as diplomado_id',
-             'diplomados.id as id_diplomado',
-
-             )
-            ->get();
+            'diplomados.nombre as nombre_diplomado',
+            'alumno_inscripcion.diplomado_id as diplomado_id',
+            'diplomados.id as id_diplomado'
+        )->get();
 
         // Eliminar el campo original 'id' ya que ahora tenemos 'alumno_id'
         $pendienteMesUser->transform(function ($item) {
@@ -53,8 +60,22 @@ class PagosController extends Controller
             return $item;
         });
 
+        // KPI Data para Dashboard de Rendimiento del Tutor
+        $cerradas = 0;
+        if ($tutorId) {
+            // Contar cuantas inscripciones hechas por ESTE tutor YA tienen al menos 1 pago (Seguimiento concluido)
+            $cerradas = Inscripcion::join('pagos_colegiatura', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
+                ->where('alumno_inscripcion.tutor', $tutorId)
+                ->distinct('alumno_inscripcion.id')
+                ->count('alumno_inscripcion.id');
+        }
+
         return response()->json([
-            'pendienteMesUser' => $pendienteMesUser
+            'pendienteMesUser' => $pendienteMesUser,
+            'kpi' => [
+                'cerradas' => $cerradas,
+                'meta' => 20
+            ]
         ]);
     }
 
@@ -99,6 +120,39 @@ class PagosController extends Controller
         return Inertia::render('PagosMensualidades',
     [    'userId' => $user->id]
     );
+     }
+
+     public function vistaContabilidad(){
+        $user = User::find(auth()->user()->id);
+        return Inertia::render('Contabilidad', ['userId' => $user->id]);
+     }
+
+     public function reporteContabilidad(Request $request){
+        $pagos = Pagos::select(
+            'pagos_colegiatura.id as id_pago',
+            'pagos_colegiatura.pago_colegiatura as monto',
+            'pagos_colegiatura.Fecha_PrimerContacto as fecha_operacion',
+            'pagos_colegiatura.created_at as fecha_ingreso_sistema',
+            'alumno_inscripcion.nombre_alumno',
+            'diplomados.nombre as diplomado',
+            'cuenta_deposito.banco as banco',
+            'cuenta_deposito.titular as titular_cuenta',
+            'users.name as cajero'
+        )
+        ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
+        ->join('diplomados', 'diplomados.id', '=', 'pagos_colegiatura.diplomado_id')
+        ->join('cuenta_deposito', 'cuenta_deposito.id', '=', 'pagos_colegiatura.cuentadeposito')
+        ->join('users', 'users.id', '=', 'pagos_colegiatura.tutor')
+        ->where('pagos_colegiatura.status', 'activo')
+        ->orderBy('pagos_colegiatura.created_at', 'desc')
+        ->get();
+
+        $sumaExito = $pagos->sum('monto');
+
+        return response()->json([
+            'pagos' => $pagos,
+            'retiro_total' => $sumaExito,
+        ]);
      }
 
 
@@ -281,6 +335,13 @@ class PagosController extends Controller
             $pago->alumno_id = $request ->input('alumno_id');
             $pago->tutor = $request ->input('tutor');
 
+            if ($request->hasFile('comprobante')) {
+                $path = $request->file('comprobante')->store('comprobantes_pagos', 'public');
+                $pago->comprobante_path = '/storage/' . $path;
+            } else {
+                throw new \Exception('Se requiere adjuntar un pdf o imagen como comprobante de pago.');
+            }
+
             $pago->save();
 
 
@@ -304,7 +365,7 @@ class PagosController extends Controller
     }
 
     public function directorio(Request $request) {
-        $AlumnosEstadoPagar = Pagos::select(
+        $AlumnosEstadoPagar = \App\Models\Inscripcion::select(
                 'alumno_inscripcion.id as alumno_id',
                 'alumno_inscripcion.nombre_alumno as nombre_completo',
                 'alumno_inscripcion.saldo as Pendiente_Pagar',
@@ -316,35 +377,19 @@ class PagosController extends Controller
                 'diplomados.nombre as nombre_diplomado',
                 'diplomados.id as diplomado_id',
                 'alumno_inscripcion.created_at as created_at',
-                'alumno_inscripcion.updated_at as updated_at'
-                // Agregar los campos adicionales aquí
+                'alumno_inscripcion.updated_at as updated_at',
+                'users.name as tutor_nombre',
+                'tutores.name as asesor_nombre',
+                'cuenta_deposito.banco as banco_registro',
+                'cuenta_deposito.titular as titular_registro'
             )
-            ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
-            ->join('users', 'users.id', '=', 'alumno_inscripcion.tutor')
-            ->join('users as tutores', 'tutores.id', '=', 'alumno_inscripcion.asesor')
-            ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
-            ->join('grupo_campañas', 'grupo_campañas.id', '=', 'alumno_inscripcion.grupo_campa')
-            ->join('cuenta_deposito', 'alumno_inscripcion.cuentadeposito', '=', 'cuenta_deposito.id')
+            ->leftJoin('users', 'users.id', '=', 'alumno_inscripcion.tutor')
+            ->leftJoin('users as tutores', 'tutores.id', '=', 'alumno_inscripcion.asesor')
+            ->leftJoin('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
+            ->leftJoin('grupo_campañas', 'grupo_campañas.id', '=', 'alumno_inscripcion.grupo_campa')
+            ->leftJoin('cuenta_deposito', 'alumno_inscripcion.cuentadeposito', '=', 'cuenta_deposito.id')
             ->where('alumno_inscripcion.saldo', '>', 0)
-            ->groupBy(
-                'alumno_inscripcion.id',
-                'alumno_inscripcion.nombre_alumno',
-                'alumno_inscripcion.saldo',
-                'alumno_inscripcion.fecha_inscripcion',
-                'alumno_inscripcion.grupo_campa',
-                'grupo_campañas.campaña',
-                'grupo_campañas.grupo',
-                'diplomados.nombre',
-                'cuenta_deposito.titular',
-                'cuenta_deposito.banco',
-                'cuenta_deposito.numero_cuenta',
-                'cuenta_deposito.CLABE',
-                'users.name',
-                'tutores.name',
-                'alumno_inscripcion.created_at',
-                'alumno_inscripcion.updated_at'
-            )
-            ->orderBy('alumno_inscripcion.created_at', 'desc') // Cambio a 'desc'
+            ->orderBy('alumno_inscripcion.created_at', 'desc')
             ->get();
 
         return response()->json([
@@ -436,10 +481,181 @@ class PagosController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * CANCELAR UN ABONO — Revierte el monto al saldo del alumno y marca el pago como 'Cancelado'.
      */
-    public function destroy(string $id)
+    public function cancelarAbono(Request $request, $id)
     {
-        //
+        $request->validate([
+            'motivo' => 'required|string|max:500',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $pago = Pagos::findOrFail($id);
+
+            if ($pago->status === 'Cancelado') {
+                return response()->json(['error' => 'Este abono ya fue cancelado anteriormente.'], 422);
+            }
+
+            // Devolver el monto al saldo del alumno
+            $inscripcion = Inscripcion::findOrFail($pago->alumno_id);
+            $inscripcion->saldo += $pago->pago_colegiatura;
+            $inscripcion->save();
+
+            // Marcar el pago como Cancelado
+            $pago->status = 'Cancelado';
+            $pago->motivo_cancelacion = $request->motivo;
+            $pago->save();
+
+            DB::commit();
+
+            return response()->json([
+                'message'     => 'Abono cancelado correctamente. El saldo del alumno fue restituido.',
+                'saldo_nuevo' => $inscripcion->saldo,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * GET PLAN DE PAGOS — Devuelve el historial de abonos y el esquema de pagos proyectado para un alumno.
+     */
+    public function getPlanPagos($alumno_id)
+    {
+        $inscripcion = Inscripcion::with(['pagos', 'diplomado'])->findOrFail($alumno_id);
+
+        $pagosReales = Pagos::where('alumno_id', $alumno_id)
+            ->select('id', 'pago_colegiatura', 'Fecha_PrimerContacto', 'status', 'motivo_cancelacion', 'created_at')
+            ->orderBy('Fecha_PrimerContacto')
+            ->get();
+
+        // Plan de pagos personalizado si existe en columna JSON, si no se genera automático
+        $planPersonalizado = $inscripcion->plan_pagos ? json_decode($inscripcion->plan_pagos, true) : null;
+
+        return response()->json([
+            'inscripcion' => [
+                'id'              => $inscripcion->id,
+                'nombre_alumno'   => $inscripcion->nombre_alumno,
+                'saldo'           => $inscripcion->saldo,
+                'diplomado'       => $inscripcion->diplomado->nombre ?? '',
+                'costo_total'     => $inscripcion->diplomado->costo_total ?? 0,
+                'monto_inscripcion' => $inscripcion->monto_inscripcion,
+            ],
+            'pagos_realizados' => $pagosReales,
+            'plan_pagos'       => $planPersonalizado,
+        ]);
+    }
+
+    /**
+     * GUARDAR / MODIFICAR PLAN DE PAGOS — Se guarda un esquema de mensualidades personalizado en JSON.
+     */
+    public function reprogramarPlan(Request $request, $alumno_id)
+    {
+        $request->validate([
+            'plan'               => 'required|array|min:1',
+            'plan.*.fecha'       => 'required|date',
+            'plan.*.monto'       => 'required|numeric|min:1',
+            'plan.*.descripcion' => 'nullable|string|max:200',
+        ]);
+
+        $inscripcion = Inscripcion::findOrFail($alumno_id);
+        $inscripcion->plan_pagos = json_encode($request->plan);
+        $inscripcion->save();
+
+        return response()->json([
+            'message'  => 'Plan de pagos actualizado correctamente.',
+            'plan'     => $request->plan,
+        ]);
+    }
+
+    public function generarPdfPago($id)
+    {
+        $pago = Pagos::select(
+            'pagos_colegiatura.id as idpago',
+            'pagos_colegiatura.Fecha_PrimerContacto as fecha',
+            'pagos_colegiatura.pago_colegiatura as monto',
+            'diplomados.nombre as diplomado',
+            'cuenta_deposito.titular',
+            'cuenta_deposito.banco',
+            'cuenta_deposito.CLABE',
+            'cuenta_deposito.numero_cuenta',
+            'alumno_inscripcion.nombre_alumno as alumno',
+            'tutores.name as cajero'
+        )
+        ->join('diplomados', 'diplomados.id', '=', 'pagos_colegiatura.diplomado_id')
+        ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
+        ->join('cuenta_deposito', 'pagos_colegiatura.cuentadeposito', '=', 'cuenta_deposito.id')
+        ->join('users as tutores', 'tutores.id', '=', 'pagos_colegiatura.tutor')
+        ->findOrFail($id);
+
+        $pdf = Pdf::loadView('pdf.pago', compact('pago'));
+        return $pdf->download('Recibo_Pago_' . $pago->idpago . '.pdf');
+    }
+
+    public function getCalendarioPagos()
+    {
+        // Traemos todo para evaluarlo matemáticamente y evitar saldos corruptos
+        $todasInscripciones = Inscripcion::with(['pagos'])
+            ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
+            ->select('alumno_inscripcion.*', 'diplomados.nombre as diplomado_nombre', 'diplomados.costo_total')
+            ->get();
+
+        $vencidos = [];
+        $estaSemana = [];
+        $proximos = [];
+
+        $hoy = \Carbon\Carbon::now()->startOfDay();
+        $finSemana = \Carbon\Carbon::now()->copy()->endOfWeek();
+
+        foreach ($todasInscripciones as $alumno) {
+            
+            // Regla Antifraude: Matemática Estricta 
+            $importePagado = $alumno->pagos->sum('pago_colegiatura');
+            $saldoMatematico = $alumno->costo_total - ($alumno->monto_inscripcion + $importePagado);
+            
+            // Si matemáticamente ya liquidó, lo ignoramos de la cartera de cobranza
+            if ($saldoMatematico <= 0) continue;
+            
+            // Sobrescribimos el saldo al aire para enviarlo sano a la vista
+            $alumno->saldo = $saldoMatematico;
+
+            $cantidadPagos = $alumno->pagos->count();
+            
+            // Si no tiene fecha configurada, simulamos una
+            $fecha_base = $alumno->fecha_primer_pago_colegiatura ? $alumno->fecha_primer_pago_colegiatura : $alumno->created_at;
+            
+            $fechaProximoPago = \Carbon\Carbon::parse($fecha_base)->addMonths($cantidadPagos)->startOfDay();
+
+            $itemInfo = [
+                'id' => $alumno->id,
+                'nombre_alumno' => $alumno->nombre_alumno,
+                'diplomado' => $alumno->diplomado_nombre,
+                'saldo' => $alumno->saldo,
+                'celular' => $alumno->celular,
+                'fecha_pago' => $fechaProximoPago->format('Y-m-d'),
+                'dias_retraso' => $hoy->diffInDays($fechaProximoPago, false) * -1
+            ];
+
+            if ($fechaProximoPago->lt($hoy)) {
+                $vencidos[] = $itemInfo;
+            } elseif ($fechaProximoPago->between($hoy, $finSemana)) {
+                $estaSemana[] = $itemInfo;
+            } else {
+                $proximos[] = $itemInfo;
+            }
+        }
+
+        // Ordenar arrays por fecha_pago ascendente
+        usort($vencidos, function ($a, $b) { return strtotime($a['fecha_pago']) - strtotime($b['fecha_pago']); });
+        usort($estaSemana, function ($a, $b) { return strtotime($a['fecha_pago']) - strtotime($b['fecha_pago']); });
+        usort($proximos, function ($a, $b) { return strtotime($a['fecha_pago']) - strtotime($b['fecha_pago']); });
+
+        return response()->json([
+            'vencidos' => $vencidos,
+            'esta_semana' => $estaSemana,
+            'proximos' => $proximos,
+        ]);
     }
 }

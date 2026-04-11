@@ -1,524 +1,478 @@
-<script setup>
-import { ref } from 'vue';
-import { usePage } from '@inertiajs/vue3';
-import axios from 'axios';
-import swal from 'sweetalert';
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head } from "@inertiajs/vue3";
-import { provide } from 'vue';
 
-const page = usePage()
-console.log('page',page.props)
-
-const userId = page.props.userId;
-console.log('user id  ',userId);
-
-</script>
 <template>
-  <v-app>
-    <v-container class="my-8">
-      <v-row align="center">
-        <v-col cols="12" sm="8" md="6" lg="4">
-          <v-text-field
-            v-model="busqueda"
-            label="Buscar por  o nombre"
-            outlined
-            dense
-            variant="solo"
-            prepend-icon="mdi-account-search-outline"
-          ></v-text-field>
-        </v-col>
-        <v-col cols="12" sm="4" md="6" lg="8" class="d-flex justify-end">
-          <v-btn @click="buscarAlumnos" color="primary" dark>
-            <v-icon>mdi-magnify</v-icon>
-          </v-btn>
-          <v-btn @click="limpiarBusqueda" color="error" dark>
-            <v-icon>mdi-backspace-outline</v-icon>
-          </v-btn>
-        </v-col>
-      </v-row>
+  <div class="bg-transparent">
+    <v-container class="my-0 px-0 max-w-full">
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+            <v-icon color="success" class="mr-2">mdi-cash-register</v-icon>
+            Módulo de Cajas y Pagos
+        </h2>
+        <p class="text-sm text-gray-500">Busca alumnos y gestiona el historial o pago de nuevas colegiaturas con recibos oficiales.</p>
+      </div>
 
-      <v-card class="mx-auto" max-width="1000" color="white">
-        <v-virtual-scroll
-          :items="alumnosFiltrados"
-          style="margin-top: 10px"
-          item-height="100"
-        >
-          <template v-slot:default="{ item: alumnos }">
-            <v-list-item class="custom-list-item" elevation="16">
-              <v-list-item-content class="custom-list-content">
-                <v-list-item-title class="font-weight-bold">
-                  <v-chip color="black">
-                    <v-icon icon="mdi-account-circle-outline" start></v-icon>
-                    {{ alumnos.nombre_completo }}
-                  </v-chip>
-                </v-list-item-title>
-              </v-list-item-content>
-              <v-list-item-action>
-                <v-dialog max-width="1000">
-                    <template v-slot:activator="{ props: activatorProps }">
-                      <v-btn
-                        v-bind="activatorProps"
-                        class="mb-2 sm:mb-4"
-                        color="green"
-                        size="large"
-                        variant="flat"
-                        prepend-icon="mdi-credit-card-outline"
-                        @click="obtenerPagosColegiaturas(alumnos.alumno_id, alumnos.diplomado_id, alumnos.nombre_completo)"
-                      >
-                        Agregar Colegiatura
-                      </v-btn>
-                    </template>
-                    <template v-slot:default="{ isActive }">
-                      <v-card>
-                        <v-card-text>
-                            <v-card class="mx-auto bg-white dark:bg-gray-800 max-w-full sm:max-w-auto" variant="flat">
+      <!-- Filtros Maestros -->
+      <v-card variant="outlined" class="bg-white border-gray-200 shadow-sm rounded-xl overflow-hidden mb-6">
+          <div class="bg-gray-100 px-6 py-4 flex flex-col md:flex-row items-center justify-between border-b gap-4">
+              <div class="w-full md:w-5/12">
+                  <v-text-field
+                      v-model="busqueda"
+                      placeholder="Busqueda General..."
+                      variant="solo"
+                      density="comfortable"
+                      hide-details
+                      prepend-inner-icon="mdi-magnify"
+                      class="shadow-sm rounded-lg bg-white"
+                      @keyup.enter="buscarAlumnos"
+                  ></v-text-field>
+              </div>
 
-                                <v-sheet color="indigo" class="py-2 px-4">
-                                    <v-card-item class="flex-wrap">
-                                      <template v-slot:prepend>
-                                        <v-card-title class="flex items-center justify-start sm:justify-between w-full sm:w-auto">
-                                          <v-icon icon="mdi-account-circle" start class="mr-2"></v-icon>
-                                          <span class="text-body-1">{{ alumnos.nombre_completo }}</span>
-                                        </v-card-title>
-                                      </template>
+              <div class="w-full md:w-5/12">
+                  <v-select
+                      v-model="filtroDiplomado"
+                      :items="listaDiplomadosUnicos"
+                      label="Filtro General por Diplomado"
+                      variant="solo"
+                      density="comfortable"
+                      hide-details
+                      clearable
+                      prepend-inner-icon="mdi-filter-variant"
+                      class="shadow-sm rounded-lg bg-white"
+                      @update:modelValue="aplicarFiltros"
+                  ></v-select>
+              </div>
 
-                                      <v-divider class="my-2 sm:mx-2" vertical></v-divider>
-
-                                      <template v-slot:append>
-                                        <v-btn class="ms-0 sm:ms-4 text-none text-body-1 mt-2 sm:mt-0" color="red" size="small" variant="flat">
-                                          Pendiente ${{ alumnos.Pendiente_Pagar }}
-                                        </v-btn>
-                                      </template>
-                                    </v-card-item>
-                                  </v-sheet>
-
-                                <v-card class="m-4 bg-blue-gray-800 rounded-lg" variant="flat">
-                                  <v-card-item>
-                                    <v-card-title class="text-base md:text-lg lg:text-xl xl:text-2xl font-semibold text-gray-200 dark:text-gray-300 flex flex-col sm:flex-row items-center justify-center sm:justify-start">
-
-                                        <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-4">
-                                            <v-icon color="#949cf7" icon="mdi-calendar" start></v-icon>
-
-                                            <span class="text-medium-emphasis font-weight-bold text-sm sm:text-base">
-                                              Fecha de Inscripcion: {{ alumnos.fecha_inscripcion }}
-                                            </span>
-
-                                            <v-spacer class="hidden sm:block"></v-spacer>
-
-                                            <v-chip class="w-full sm:w-auto" color="primary" variant="flat" prepend-icon="mdi-account-multiple">
-                                              Campaña {{ alumnos.campaña }}
-                                            </v-chip>
-
-                                            <v-chip class="w-full sm:w-auto" color="primary" variant="flat" prepend-icon="mdi-account-multiple">
-                                              Grupo {{ alumnos.grupo }}
-                                            </v-chip>
-                                          </div>
-
-                                      <div class="flex flex-col sm:flex-row items-center sm:items-start mt-2 sm:mt-0 sm:ml-4">
-                                        <v-chip color="green" variant="flat">    {{ alumnos.nombre_diplomado }}</v-chip>
-                                        <v-chip color="indigo" variant="flat">  Inscripcion   ${{ alumnos.monto_inscripcion }}</v-chip>
-                                      </div>
-                                    </v-card-title>
-                                    <v-container>
-                                      <v-row>
-                                        <v-col v-for="(pago, index) in pagosColegiaturaAlumno2" :key="index" class="mb-4" cols="12">
-                                          <v-card class="bg-white dark:bg-gray-900 shadow-md rounded-lg">
-                                            <v-card-title></v-card-title>
-                                            <v-card-text class="p-4">
-                                                <p class="text-red-800 font-medium">
-                                                    Pagos realizado
-                                                      </p>
-                                              <div class="flex justify-between items-center mb-2">
-                                                <div class="text-green-600 dark:text-green-400 text-lg font-semibold">${{ pago.pago_colegiatura }} MXN</div>
-                                                <span class="text-sm font-semibold text-gray-600 dark:text-gray-300">Fecha de Pago : {{ pago.Fecha_PrimerContacto }}</span>
-                                              </div>
-                                              <div class="flex justify-between items-center">
-                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">ID pago: {{ pago.idpago }}</span>
-                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">Tutor: {{ pago.Tutor }}</span>
-                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">Asesor: {{ pago.Asesor }}</span>
-                                              </div>
-                                              <div class="mt-2">
-                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">{{ pago.Titular }}</span>
-                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">No Cuenta {{ pago.numero_cuenta }}</span>
-                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">{{ pago.CLABE }}</span>
-                                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-200 px-2 py-1">{{ pago.banco }}</span>
-                                              </div>
-                                            </v-card-text>
-                                          </v-card>
-                                        </v-col>
-                                      </v-row>
-                                    </v-container>
-                                  </v-card-item>
-                                </v-card>
-                              </v-card>
-
-
-                              <form class="max-w-7xl m-4 p-10 bg-gray-50 rounded shadow-xl" @submit.prevent="EnviarPago">
-                                <p class="text-gray-800 font-medium">Captura el pago de Colegiatura</p>
-                                <div class="mb-6">
-                                  <div class="d-flex align-items-center">
-                                    <v-chip class="ma-2" color="deep-orange-darken-4">Monto</v-chip>
-                                    <v-text-field v-model="pago_colegiatura" color="green" class="white" variant="outlined" type="number">$</v-text-field>
-                                  </div>
-                                </div>
-                                <div class="mb-6">
-                                  <div class="d-flex align-items-center">
-                                    <v-chip class="ma-2" color="black">Nombre</v-chip>
-                                    <select v-model="alumno_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4 -500 focus:border-deep-orange-darken-4 -500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4 -500 dark:focus:border-deep-orange-darken-4 -500">
-                                      <option disabled selected>Selecciona</option>
-                                      <option v-for="pago in uniquePagos" :key="pago.id" :value="pago.alumno_id">{{ pago.nombre_completo }}</option>
-                                    </select>
-                                  </div>
-                                </div>
-                                <div class="mb-6">
-                                  <div class="d-flex align-items-center">
-                                    <v-chip class="ma-2" color="black">Diplomado</v-chip>
-                                    <select v-model="diplomado_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4 -500 focus:border-deep-orange-darken-4 -500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4 -500 dark:focus:border-deep-orange-darken-4 -500">
-                                      <option disabled selected>Selecciona</option>
-                                      <option v-for="pago in uniqueDiplomados" :key="pago.id" :value="pago.diplomado_id">{{ pago.nombre_diplomado }}</option>
-                                    </select>
-                                  </div>
-                                </div>
-                                <div class="mb-6">
-                                  <div class="d-flex align-items-center">
-                                    <v-chip class="ma-2" color="black">No de Cuenta</v-chip>
-                                    <select v-model="selectedTitular" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4 -500 focus:border-deep-orange-darken-4 -500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4 -500 dark:focus:border-deep-orange-darken-4 -500">
-                                      <option disabled selected>Selecciona un Numero de Cuenta</option>
-                                      <option v-for="titular in cuentaDeposito" :key="titular.id" :value="titular.id">{{ titular.titular }}
-                                        <option>{{ titular.CLABE }}</option>
-                                      </option>
-                                    </select>
-                                  </div>
-                                </div>
-                                <div class="mb-6">
-                                  <div class="d-flex align-items-center">
-                                    <v-chip class="ma-2" color="black">Fecha</v-chip>
-                                    <v-text-field label="Fecha de Inscripción" required readonly color="black" v-model="fecha_inscripcion" type="date" variant="outlined" class="w-full px-4 py-2"></v-text-field>
-                                  </div>
-                                </div>
-
-
-                            <div class="flex items-start mb-6">
-                                <div class="flex items-center h-5">
-                                    <input id="remember" type="checkbox" value="" class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800" required>
-                                </div>
-                                <label for="remember" class="ml-2 text-sm text-gray-900 dark:text-gray-400">Los datos ingresados son correctos.</label>
-                            </div>
-                                    <v-btn color="green" size="large" variant="elevated" type="submit" prepend-icon="mdi-send">Enviar</v-btn>
-                                    <v-btn @click="limpiarFormulario" color="red" size="large" variant="elevated" prepend-icon="mdi-eraser">Vaciar</v-btn>
-
-                              </form>
-
-
-
-                        </v-card-text>
-                        <v-card-actions>
-                          <v-spacer></v-spacer>
-                          <v-btn text="Cerrar" @click="isActive.value = false"></v-btn>
-                        </v-card-actions>
-                      </v-card>
-                    </template>
-                  </v-dialog>
-
-
-              </v-list-item-action>
-            </v-list-item>
-          </template>
-        </v-virtual-scroll>
+              <div class="w-full md:w-2/12 flex space-x-2">
+                  <v-btn @click="buscarAlumnos" color="indigo-darken-3" class="flex-1" variant="elevated" prepend-icon="mdi-folder-search-outline">Filtrar</v-btn>
+                  <v-btn @click="limpiarBusqueda" color="grey-darken-1" variant="tonal" icon="mdi-eraser"></v-btn>
+              </div>
+          </div>
       </v-card>
+
+      <!-- TABLA DE CARTERA FORMATO EXCEL -->
+      <v-card variant="flat" class="bg-white border-gray-200 shadow-sm rounded-xl overflow-hidden mb-6">
+          <v-data-table
+              :headers="headers"
+              :items="alumnosCalculados"
+              hover
+              class="tabla-excel border-t border-gray-100"
+              density="compact"
+              fixed-header
+              height="680"
+              :items-per-page="50"
+          >
+              <!-- Cabeceras estilo Excel -->
+              <template v-slot:header.nombre_completo="{ column }">
+                  <div class="header-excel">
+                      <span class="text-xs font-black uppercase text-indigo-900 border-b w-full pb-1 mb-2">{{ column.title }}</span>
+                      <v-text-field v-model="filtros.nombre" placeholder="Nombre..." variant="plain" density="compact" hide-details prepend-inner-icon="mdi-filter" class="header-excel-input"></v-text-field>
+                  </div>
+              </template>
+
+              <template v-slot:header.nombre_diplomado="{ column }">
+                  <div class="header-excel">
+                      <span class="text-xs font-black uppercase text-indigo-900 border-b w-full pb-1 mb-2">{{ column.title }}</span>
+                      <v-select v-model="filtros.diplomados_multi" :items="listaDiplomadosUnicos" placeholder="Filtro Excel" multiple density="compact" hide-details variant="plain" class="header-excel-input">
+                          <template v-slot:selection="{ item, index }">
+                              <span v-if="index === 0" class="text-xs font-bold">{{ item.title }}</span>
+                              <span v-if="index === 1" class="text-xs grey--text ml-1">(+{{ filtros.diplomados_multi.length - 1 }})</span>
+                          </template>
+                      </v-select>
+                  </div>
+              </template>
+
+              <template v-slot:header.grupo="{ column }">
+                  <div class="header-excel">
+                      <span class="text-xs font-black uppercase text-indigo-900 border-b w-full pb-1 mb-2">{{ column.title }}</span>
+                      <v-text-field v-model="filtros.grupo" placeholder="Filtrar..." variant="plain" density="compact" hide-details class="header-excel-input"></v-text-field>
+                  </div>
+              </template>
+
+              <template v-slot:item.nombre_completo="{ item }">
+                  <div class="font-bold text-gray-800 py-1">{{ item.nombre_completo }}</div>
+              </template>
+
+              <template v-slot:item.nombre_diplomado="{ item }">
+                  <div class="text-indigo-800 text-xs">{{ item.nombre_diplomado }}</div>
+              </template>
+
+              <template v-slot:item.grupo="{ item }">
+                  <div class="text-xs text-gray-600">
+                      {{ item.campaña }} • {{ item.grupo }}
+                  </div>
+              </template>
+
+              <template v-slot:item.Pendiente_Pagar="{ item }">
+                  <div class="text-end font-black text-red-700 bg-red-50 px-2 rounded-lg border border-red-100">
+                      ${{ Number(item.Pendiente_Pagar).toLocaleString('es-MX') }}
+                  </div>
+              </template>
+
+              <template v-slot:item.acciones="{ item }">
+                  <v-btn
+                      color="indigo-darken-3"
+                      variant="elevated"
+                      size="x-small"
+                      prepend-icon="mdi-cash-register"
+                      class="px-3"
+                      @click="abrirCaja(item)"
+                  >
+                      IR A CAJA
+                  </v-btn>
+              </template>
+
+              <template v-slot:no-data>
+                  <div class="text-center py-6 text-gray-400">
+                      <v-icon size="40" class="mb-2">mdi-account-search-outline</v-icon>
+                      <p>No se encontraron datos que coincidan con los filtros aplicados.</p>
+                  </div>
+              </template>
+          </v-data-table>
+      </v-card>
+
+      <!-- DIALOGO Y FORMULARIO DE PAGOS (GLOBAL) -->
+      <v-dialog max-width="850" v-model="mostrarModalCobro">
+          <v-card rounded="xl" class="overflow-hidden" v-if="alumnoActivo">
+              <div class="bg-indigo-900 px-6 py-4 flex justify-between items-center text-white">
+                  <div>
+                      <h3 class="text-lg font-medium flex items-center">
+                          <v-icon color="success" class="mr-2">mdi-point-of-sale</v-icon>
+                          Terminal Corporativa de Caja
+                      </h3>
+                      <p class="text-indigo-200 text-xs">Alumno: {{ alumnoActivo.nombre_completo }}</p>
+                  </div>
+                  <v-chip color="red-darken-1" size="small" variant="flat" prepend-icon="mdi-alert-circle">
+                      Saldo Pendiente: ${{ alumnoActivo.Pendiente_Pagar }}
+                  </v-chip>
+              </div>
+
+              <v-card-text class="bg-gray-50 p-6">
+                  <v-expansion-panels class="mb-6">
+                      <v-expansion-panel elevation="0" class="border border-gray-200 rounded-lg">
+                          <v-expansion-panel-title class="bg-white font-bold text-gray-700">
+                              <v-icon color="indigo" class="mr-2">mdi-folder-account-outline</v-icon>
+                              Ver Expediente Completo del Alumno
+                          </v-expansion-panel-title>
+                          <v-expansion-panel-text class="bg-gray-50 pt-4">
+                              <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                                  <div><strong class="text-gray-500 block mb-1">Campaña y Grupo:</strong><v-chip size="x-small" color="blue">{{ alumnoActivo.campaña }} ({{ alumnoActivo.grupo }})</v-chip></div>
+                                  <div><strong class="text-gray-500 block mb-1">Asesor Vendedor:</strong><v-chip size="x-small" color="orange">{{ alumnoActivo.asesor_nombre }}</v-chip></div>
+                                  <div><strong class="text-gray-500 block mb-1">Aperturó (1er Pago):</strong><v-chip size="x-small" color="purple">{{ alumnoActivo.tutor_nombre }}</v-chip></div>
+                                  <div><strong class="text-gray-500 block mb-1">Fecha de Ingreso:</strong><v-chip size="x-small" color="gray">{{ alumnoActivo.fecha_inscripcion }}</v-chip></div>
+                                  <div><strong class="text-gray-500 block mb-1">Aportación Base:</strong><v-chip size="x-small" color="green">${{ alumnoActivo.monto_inscripcion }} mxn</v-chip></div>
+                                  <div class="col-span-2 lg:col-span-3"><strong class="text-gray-500 block mb-1">Cuenta/Banco Receptor Original:</strong><span class="text-xs text-gray-700 bg-white px-2 py-1 rounded border">{{ alumnoActivo.banco_registro }} - {{ alumnoActivo.titular_registro }}</span></div>
+                              </div>
+                          </v-expansion-panel-text>
+                      </v-expansion-panel>
+                  </v-expansion-panels>
+
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div>
+                          <form @submit.prevent="EnviarPago(alumnoActivo)" class="space-y-4">
+                              <v-text-field v-model.number="pago_colegiatura" label="Importe Cobrado (MXN)" variant="outlined" density="comfortable" type="number" prefix="$" bg-color="white" required></v-text-field>
+                              <div class="grid grid-cols-2 gap-4">
+                                  <v-text-field v-model="fecha_inscripcion" label="Fecha" variant="filled" density="comfortable" type="date" readonly bg-color="gray-100"></v-text-field>
+                                  <v-select v-model="selectedTitular" :items="cuentaDeposito" item-title="banco" item-value="id" label="Cuenta" variant="outlined" density="comfortable" bg-color="white" required></v-select>
+                              </div>
+                              <v-file-input v-model="comprobante" label="Comprobante" variant="outlined" density="comfortable" bg-color="white" required></v-file-input>
+                              <v-btn type="submit" color="success" size="large" variant="elevated" prepend-icon="mdi-printer-pos" block>Cobrar e Imprimir PDF</v-btn>
+                          </form>
+                      </div>
+                      <div>
+                          <h4 class="text-gray-700 font-bold mb-4">Historial</h4>
+                          <v-card variant="outlined" class="bg-white max-h-80 overflow-y-auto">
+                              <v-list>
+                                  <v-list-item v-for="(pago, index) in pagosColegiaturaAlumno2" :key="index" class="border-b">
+                                      <v-list-item-title class="font-bold text-sm">+${{ pago.pago_colegiatura }} MXN</v-list-item-title>
+                                      <v-list-item-subtitle class="text-xs text-gray-500">{{ pago.Fecha_PrimerContacto }}</v-list-item-subtitle>
+                                      <template v-slot:append>
+                                           <v-btn size="x-small" icon="mdi-file-pdf-box" variant="text" color="red" @click="descargarPDFHistorial(pago.idpago)"></v-btn>
+                                      </template>
+                                  </v-list-item>
+                              </v-list>
+                          </v-card>
+                      </div>
+                  </div>
+              </v-card-text>
+              <v-card-actions class="bg-gray-100 px-6 py-3 justify-end border-t">
+                  <v-btn variant="text" color="grey-darken-3" prepend-icon="mdi-close" @click="mostrarModalCobro = false">Cerrar</v-btn>
+              </v-card-actions>
+          </v-card>
+      </v-dialog>
     </v-container>
-  </v-app>
+  </div>
 </template>
 
-
-
-<style scoped>
-@media (max-width: 639px) {
-    .text-sm {
-      font-size: 0.875rem; /* Tailwind text-sm */
-    }
-
-    .w-full {
-      width: 100%;
-    }
-  }
-
-.v-card-item {
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-  }
-
-  @media (min-width: 640px) {
-    .v-card-item {
-      flex-direction: row;
-      align-items: center;
-    }
-  }
-.custom-list-item {
-  border-radius: 8px;
-  margin: 10px;
-}
-
-.custom-list-content {
-  padding: 10px; /* Espaciado interno */
-}
-
-.custom-btn {
-  background-color: rgb(7, 121, 16); /* Color de fondo personalizado */
-  color: white; /* Color del texto personalizado */
-  text-align: left;
-  justify-content: left;
-  border: 1px solid teal; /* Borde personalizado */
-}
-
-.custom-btn:hover {
-  background-color: #26a01b; /* Cambiar color al pasar el ratón sobre el botón */
-}
-</style>
-
 <script>
-import Swal from "sweetalert"; // Asegúrate de usar "sweetalert2"
-import { ref } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import swal from "sweetalert";
 import axios from 'axios';
-
-
+import { usePage } from '@inertiajs/vue3';
 
 export default {
-
   data() {
     return {
-        alumno_id: null, // Variable para almacenar el ID del alumno de forma segura
-        alumnos: {
-        alumno_id: null, // Variable donde se almacena el ID del alumno del v-model
-        // Otras propiedades de alumnos...
-      },
+      headers: [
+        { title: 'Alumno (Nombre Completo)', key: 'nombre_completo', align: 'start', sortable: true },
+        { title: 'Diplomado', key: 'nombre_diplomado', sortable: true },
+        { title: 'Campaña y Grupo', key: 'grupo' },
+        { title: 'Saldo Pendiente ($)', key: 'Pendiente_Pagar', align: 'end', sortable: true },
+        { title: 'Acciones de Caja', key: 'acciones', align: 'center', sortable: false },
+      ],
+      alumno_id: null,
       busqueda: "",
+      filtroDiplomado: null,
+      filtros: { nombre: "", diplomados_multi: [], grupo: "" },
       diplomado_id: null,
       AlumnosEstadoPagar: [],
-      alumnosFiltrados: [],
-      dialog: false,
-      alumnoSeleccionado: [],
       pago_colegiatura: null,
-      fecha: null,
-      mostrarDialog1: false,
-      mostrarDialog2: false,
-      mostrarDialog3: false,
-      selectedAlumno: null,
-      selectedDiplomado: null,
-      selectedTitular: null,
-      Alumnos: [],
-      alumnoSeleccionadoId: null,
-      search: "",
       fecha_inscripcion: "",
-      NombreDiplomado: [],
       cuentaDeposito: [],
-      pagosColegiaturaAlumno2:[],
-      alumnoIdSeleccionado: null,
-      userId:null, // Definir userId aquí
-
+      pagosColegiaturaAlumno2: [],
+      userId: null,
+      comprobante: null,
+      mostrarModalCobro: false,
+      alumnoActivo: null,
     };
   },
+  computed: {
+    alumnosCalculados() {
+        let items = this.AlumnosEstadoPagar;
+
+        // Búsqueda General
+        if (this.busqueda.trim() !== "") {
+            const q = this.busqueda.toLowerCase();
+            items = items.filter(a => a.nombre_completo?.toLowerCase().includes(q));
+        }
+
+        // Filtro Dropdown Diplomado Maestro
+        if (this.filtroDiplomado) {
+            items = items.filter(a => a.nombre_diplomado === this.filtroDiplomado);
+        }
+
+        // Filtro Excel: Nombre
+        if (this.filtros.nombre.trim() !== "") {
+            const q = this.filtros.nombre.toLowerCase();
+            items = items.filter(a => a.nombre_completo?.toLowerCase().includes(q));
+        }
+        
+        // Filtro Excel: Diplomados Multi
+        if (this.filtros.diplomados_multi.length > 0) {
+            items = items.filter(a => this.filtros.diplomados_multi.includes(a.nombre_diplomado));
+        }
+
+        // Filtro Excel: Grupo
+        if (this.filtros.grupo.trim() !== "") {
+            const q = this.filtros.grupo.toLowerCase();
+            items = items.filter(a => a.grupo?.toLowerCase().includes(q));
+        }
+
+        return items;
+    },
+    listaDiplomadosUnicos() {
+        const unicos = new Set();
+        this.AlumnosEstadoPagar.forEach(item => {
+            if(item.nombre_diplomado) unicos.add(item.nombre_diplomado);
+        });
+        return Array.from(unicos);
+    }
+  },
   created() {
+    this.userId = this.$page.props.auth?.user?.id || this.$page.props.userId;
     this.obtenerNumeroCuenta();
     this.setFechaActual();
     this.obtenerListaAlumnos();
-
   },
-
-  computed: {
-    uniquePagos() {
-      const seen = new Set();
-      return this.pagosColegiaturaAlumno2.filter(pago => {
-        const isDuplicate = seen.has(pago.nombre_completo);
-        seen.add(pago.nombre_completo);
-        return !isDuplicate;
-      });
-    },
-    uniqueDiplomados() {
-      const seen = new Set();
-      return this.pagosColegiaturaAlumno2.filter(pago => {
-        const isDuplicate = seen.has(pago.nombre_diplomado);
-        seen.add(pago.nombre_diplomado);
-        return !isDuplicate;
-      });
-    }
-
-
-
-  },
-  mounted() {
-
-},
-
   methods: {
+    calcularTotalGrupo(items) {
+      if (!items || items.length === 0) return 0;
+      return items.reduce((acc, item) => {
+          // El objeto item suele venir envuelto en una estructura de v-data-table v3
+          // Accedemos a la propiedad raw si es necesario, o al valor directo
+          const val = item.raw ? parseFloat(item.raw.Pendiente_Pagar) : parseFloat(item.Pendiente_Pagar || 0);
+          return acc + (isNaN(val) ? 0 : val);
+      }, 0);
+    },
+
+    abrirCaja(alumno) {
+        this.alumnoActivo = alumno;
+        this.obtenerPagosColegiaturas(alumno.alumno_id, alumno.diplomado_id, alumno.nombre_completo);
+        this.mostrarModalCobro = true;
+    },
+
     limpiarFormulario() {
+        this.pago_colegiatura = '';
+        this.selectedTitular = null;
+        this.comprobante = null;
+    },
+    
+    // Descarga manual desde el historial
+    descargarPDFHistorial(idPagoGenerado) {
+        window.open('/pagos/' + idPagoGenerado + '/pdf', '_blank');
+    },
 
-            this.pago_colegiatura = '';
-            this.selectedTitular = null;
-            this.monto_inscripcion = '';
-            this.fecha_primer_pago_colegiatura = '';
-        },
-
-  EnviarPago ()  {
-    const page = usePage()
-console.log('page',page.props)
-
-const userId = page.props.userId;
-console.log('user id  ',userId);
-
-
-
-    const inscripcion = {
-      Fecha_PrimerContacto: this.fecha_inscripcion,
-      pago_colegiatura: this.pago_colegiatura,
-      tutor: userId, // Usar el id del tutor pasado como prop
-      status: 'Activo',
-      cuentadeposito: this.selectedTitular,
-      alumno_id: this.alumno_id, // Usando alumnos.alumno_id
-      diplomado_id: this.diplomado_id
-    };
-
-
-    axios.post('api/v1/pagosabonos/crear', inscripcion)
-      .then(res => {
-        console.log(res);
-        console.log('Datos de PAGOS enviados:', inscripcion);
-
-        swal("Pago registrado con éxito", "success");
-        this.pago_colegiatura='';
-        this.fecha_inscripcion='';
-        this.selectedTitular='';
-        this.obtenerListaAlumnos();
-      })
-      .catch((err) => {
-        swal("Llenar completamente el formuluario");
-        console.error(err);
-      });
-  },
-    obtenerPagosColegiaturas(alumno_id, diplomado_id) {
-      console.log('Valor de diplomado :', diplomado_id);
-      console.log('Valor de alumno_id:', alumno_id);
-
-      // Verificar si alguno de los valores es nulo
-      if (alumno_id === null || diplomado_id === null) {
-        console.log('Alumno_id o diplomado_id es nulo. No se puede realizar la solicitud.');
-        return; // Salir de la función
+    EnviarPago(alumno_context) {
+      // Validaciones básicas
+      if (!this.pago_colegiatura || !this.selectedTitular || !this.fecha_inscripcion || !this.comprobante) {
+          swal("Requerido", "Asegúrese de agregar un monto, la cuenta receptora y subir el comprobante de pago.", "warning");
+           return;
       }
 
-      const url = `/api/v1/mostrar/alumno/status/${alumno_id}`;
+      if(this.pago_colegiatura <= 0) {
+          swal("Cifra Inválida", "El monto abonado debe ser estrictamente mayor a 0 MXN.", "warning"); return;
+      }
 
-      console.log('Consulta enviada:', url);
-      this.enviarDatos(alumno_id, diplomado_id);
+      if(alumno_context && this.pago_colegiatura > alumno_context.Pendiente_Pagar) {
+          swal("Monto Exorbitante / Bloqueo", `No puedes recibir $${this.pago_colegiatura}. El tope exacto de la deuda restante de este alumno consta de $${alumno_context.Pendiente_Pagar} MXN en el sistema.`, "error"); return;
+      }
 
-      axios.get(url)
-        .then((res) => {
-          console.log('Valor de alumno_id 2:', alumno_id);
-          this.pagosColegiaturaAlumno2 = res.data.pagosColegiaturaAlumno2;
-          console.log("colegiaturas del alumno", res.data);
+      let formData = new FormData();
+      formData.append('Fecha_PrimerContacto', this.fecha_inscripcion);
+      formData.append('pago_colegiatura', this.pago_colegiatura);
+      formData.append('tutor', this.userId);
+      formData.append('status', 'Activo');
+      formData.append('cuentadeposito', this.selectedTitular);
+      formData.append('alumno_id', this.alumno_id);
+      formData.append('diplomado_id', this.diplomado_id);
+      formData.append('comprobante', this.comprobante);
+
+      axios.post('api/v1/pagosabonos/crear', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+      })
+        .then(res => {
+          swal("Corte Exitoso", "El pago oficial ha sido timbrado al expediente. Su recibo PDF se está descargando...", "success");
+          
+          // CAPTURAR EL ID RECIÉN CREADO EN LA BASE DE DATOS Y ENVIAR AL DESCARGABLE PDF
+          const idPagoNuevecito = res.data.pago.id;
+          
+          setTimeout(() => {
+              window.open('/pagos/' + idPagoNuevecito + '/pdf', '_blank');
+          }, 1000);
+
+          this.limpiarFormulario();
+          this.obtenerPagosColegiaturas(this.alumno_id, this.diplomado_id, "Actualización Historial");
+          this.obtenerListaAlumnos(); // Refrescar montos pendientes master
         })
         .catch((err) => {
+          swal("Error en Caja", "Ocurrió un error en sistema central. Consulta logs.", "error");
           console.error(err);
-        })
-        .finally(() => {
-          // Reiniciar el valor de alumno_id a null después de que termine la petición
-          this.alumno_id = null;
-          this.diplomado_id = null;
-
-          console.log('Valor de reiniciado:', alumno_id, diplomado_id);
         });
     },
+    
+    obtenerPagosColegiaturas(a_id, d_id, nombre_ref) {
+      if (!a_id || !d_id) return;
 
-
-    enviarDatos(alumno_id, diplomado_id) {
-      // Aquí puedes enviar los datos a otra parte de tu código o a una API
-      console.log('Enviando datos:');
-      console.log('Alumno ID:', alumno_id);
-      console.log('Diplomado ID:', diplomado_id);
+      this.alumno_id = a_id;
+      this.diplomado_id = d_id;
+      
+      const url = `/api/v1/mostrar/alumno/status/${a_id}`;
+      axios.get(url)
+        .then((res) => {
+          this.pagosColegiaturaAlumno2 = res.data.pagosColegiaturaAlumno2;
+        })
+        .catch((err) => console.error(err));
     },
 
     obtenerNumeroCuenta() {
-      axios
-        .get("/api/v1/cuentadeposito/index/2024/numero")
-        .then((res) => {
-          this.cuentaDeposito = res.data.cuentaDeposito;
-          console.log(res);
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+      axios.get("/api/v1/cuentadeposito/index/2024/numero")
+        .then((res) => this.cuentaDeposito = res.data.cuentaDeposito )
+        .catch((err) => console.error(err));
     },
+
+    aplicarFiltros() {
+      // Método unificado para ejecutar búsqueda textual y dropdown de diplomado
+      let resultados = this.AlumnosEstadoPagar;
+
+      // 1. Filtrar por búsqueda de nombre
+      if (this.busqueda.trim() !== "") {
+          const term = this.busqueda.toLowerCase();
+          resultados = resultados.filter(a => String(a.nombre_completo).toLowerCase().includes(term));
+      }
+
+      // 2. Filtrar por el Diplomado Seleccionado
+      if (this.filtroDiplomado) {
+           resultados = resultados.filter(a => a.nombre_diplomado === this.filtroDiplomado);
+      }
+
+      this.alumnosFiltrados = resultados.map(a => ({...a, showModal: false}));
+
+      if(this.alumnosFiltrados.length === 0 && (this.busqueda !== "" || this.filtroDiplomado)){
+          swal({icon: "info", title: "Sin Coincidencias", text: "El alumno / expediente buscado no existe o no cuenta con deuda actual.", buttons: "Entendido"});
+      }
+    },
+
     buscarAlumnos() {
-      if (this.busqueda.trim() === "") {
-        // Si la búsqueda está vacía, mostrar todos los alumnos
-        this.alumnosFiltrados = this.AlumnosEstadoPagar.map(alumno => ({ ...alumno }));
-      } else {
-        // Filtrar los alumnos basados en la búsqueda
-        this.alumnosFiltrados = this.AlumnosEstadoPagar.filter((alumno) => {
-          const nombreCompletoStr = alumno.nombre_completo
-            ? String(alumno.nombre_completo).toLowerCase()
-            : "";
-          const busquedaStr = this.busqueda.toLowerCase();
-          const match = nombreCompletoStr.includes(busquedaStr);
-          return match;
-        }).map(alumno => ({ ...alumno }));
-      }
-
-      if (this.alumnosFiltrados.length === 0) {
-        this.mostrarAlertaNoresultados();
-      }
+      this.aplicarFiltros();
     },
 
+    forzarBusqueda(nombre) {
+      this.busqueda = nombre;
+      this.filtroDiplomado = null;
+      this.aplicarFiltros();
+
+      // Buscar el match exacto y auto-abrir el formulario
+      const exactMatch = this.alumnosFiltrados.find(a => a.nombre_completo === nombre);
+      if (exactMatch) {
+          setTimeout(() => {
+              this.abrirCaja(exactMatch);
+          }, 100);
+      }
+    },
 
     limpiarBusqueda() {
       this.busqueda = "";
-      // Restaurar la lista de alumnos filtrados a la lista completa de alumnos
-      this.alumnosFiltrados = this.AlumnosEstadoPagar;
+      this.filtroDiplomado = null;
+      this.filtros.nombre = "";
+      this.filtros.diplomados_multi = [];
+      this.filtros.grupo = "";
     },
 
-    verAlumno(alumno) {},
-    mostrarAlertaNoresultados() {
-      Swal.fire({
-        icon: "info",
-        title: "No se hallaron resultados",
-        text: "No hay alumnos que coincidan con la búsqueda",
-        confirmButtonText: "Aceptar",
-      });
-    },
-    cerrarDialogo() {
-      this.dialog = false;
-      this.alumnoSeleccionado = {};
-    },
     setFechaActual() {
-
       const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, "0");
-      const day = String(today.getDate()).padStart(2, "0");
-      this.fecha_inscripcion = `${year}-${month}-${day}`;
+      this.fecha_inscripcion = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
     },
+
     obtenerListaAlumnos() {
-      axios
-        .get("/api/v1/directorio/pagos/mensualidades", {})
+      axios.get("/api/v1/directorio/pagos/mensualidades")
         .then((response) => {
-          console.log("Respuesta de la API:", response.data);
           this.AlumnosEstadoPagar = response.data.AlumnosEstadoPagar;
-          this.alumnosFiltrados = response.data.AlumnosEstadoPagar.map(alumnos => ({ ...alumnos })); // Actualizar alumnosFiltrados
-          // No necesitas asignar alumno_id aquí
-
-          // Puedes iterar sobre la lista de alumnos y mostrar los ids en la consola
-          this.AlumnosEstadoPagar.forEach(alumnos => {
-            console.log('ID del alumno:', alumnos.alumno_id);
-            console.log('ID del diplomado:', alumnos.diplomado_id);
-          });
         })
-        .catch((error) => {
-          console.error("Error al obtener las alumnos:", error);
-        });
+        .catch((error) => console.error(error));
     },
-
   },
 };
 </script>
+
+<style>
+.tabla-excel {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+.tabla-excel .v-data-table-header th {
+    background-color: #f8fafc !important;
+    border-right: 1px solid #e2e8f0 !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+.tabla-excel .v-data-table__tr td {
+    border-right: 1px solid #f1f5f9 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+.tabla-excel .v-data-table__tr:hover {
+    background-color: #f1f5f9 !important;
+}
+
+.header-excel {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+}
+.header-excel-input {
+    background: white !important;
+    border-radius: 4px !important;
+    border: 1px solid #cbd5e1 !important;
+    margin-top: 4px !important;
+}
+.header-excel-input input {
+    font-size: 0.75rem !important;
+    padding: 4px 8px !important;
+}
+</style>

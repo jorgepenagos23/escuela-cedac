@@ -4,144 +4,169 @@ import { Head } from "@inertiajs/vue3";
 </script>
 
 <template>
-    <div>
-        <!-- Contenido de tu vista -->
-        <div class="max-w-7xl mx-auto p-6 lg:p-8">
+  <AuthenticatedLayout>
+    <Head title="Directorio Global de Alumnos" />
+    
+    <div class="bg-gray-50 min-h-screen pb-10">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        
+        <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+              <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                  <v-icon color="indigo-darken-2" class="mr-2">mdi-account-group-outline</v-icon>
+                  Padrón Global de Estudiantes
+              </h2>
+              <p class="text-sm text-gray-500 mt-1">
+                Buscador maestro. Encuentra rápido a cualquier alumno ingresando su nombre, matrícula o diplomado asignado.
+              </p>
+          </div>
+          
+          <div class="mt-4 md:mt-0 space-x-2 flex">
+            <!-- Botón para Formato A (Admisiones) -->
+            <v-btn
+              prepend-icon="mdi-account-plus"
+              color="indigo"
+              variant="flat"
+              @click="$refs.fileInputAdmissions.click()"
+              :loading="importingAdmissions"
+            >
+              Cargar Admisiones
+            </v-btn>
+            <input
+              type="file"
+              ref="fileInputAdmissions"
+              class="hidden"
+              accept=".xlsx,.xls,.csv"
+              @change="handleFileUpload($event, 'admissions')"
+            />
 
-            <Head title="Cedac" />
-            <AuthenticatedLayout>
-                <template #header>
-                    <v-toolbar title="Alumnos" color="indigo">
-                      <v-toolbar-items>
-                        <v-btn
-
-                        link href="/crud-alumnos"
-                        >Agregar Alumnos</v-btn>
-
-                      </v-toolbar-items>
-
-                      <v-divider class="mx-2" vertical></v-divider>
-
-                      <v-btn icon="mdi-dots-vertical"></v-btn>
-                    </v-toolbar>
-
-                    <h2 class="font-semibold text-xl text-gray-800 leading-tight"></h2>
-                    <v-container>
-                      <v-row align="center" justify="center"> </v-row>
-                    </v-container>
-                  </template>
-                <v-card> </v-card>
-
-                <v-card color="white" flat>
-                    <div class="py-0">
-                        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                            <v-card title="Barra de Busqueda">
-                                <template v-slot:text>
-                                    <v-text-field v-model="search" label="Buscar alumnos"
-                                        prepend-inner-icon="mdi-magnify" variant="outlined" hide-details
-                                        single-line></v-text-field>
-                                </template>
-                            </v-card>
-                            <v-data-table :headers="headers" :items="alumnos" :search="search" class="bg-yellow-lighten-5
-
-
-
-                            ">
-                            </v-data-table>
-
-                        </div>
-                    </div>
-                </v-card>
-            </AuthenticatedLayout>
-
-
-
+            <!-- Botón para Formato B (Historial) -->
+            <v-btn
+              prepend-icon="mdi-history"
+              color="success"
+              variant="flat"
+              @click="$refs.fileInputHistorical.click()"
+              :loading="importingHistorical"
+            >
+              Cargar Histórico
+            </v-btn>
+            <input
+              type="file"
+              ref="fileInputHistorical"
+              class="hidden"
+              accept=".xlsx,.xls,.csv"
+              @change="handleFileUpload($event, 'historical')"
+            />
+          </div>
         </div>
 
+        <v-card variant="outlined" class="bg-white border-gray-200 shadow-sm rounded-xl overflow-hidden mb-6">
+            <div class="bg-gray-100 px-6 py-4 flex flex-col md:flex-row items-center border-b">
+                <div class="w-full">
+                    <v-text-field
+                        v-model="search"
+                        placeholder="Buscar por Nombre, Matrícula o Diplomado..."
+                        variant="solo"
+                        density="comfortable"
+                        hide-details
+                        prepend-inner-icon="mdi-account-search"
+                        class="shadow-sm rounded-lg bg-white"
+                        autofocus
+                    ></v-text-field>
+                </div>
+            </div>
 
+            <div class="p-4">
+                <v-data-table
+                    :headers="headers"
+                    :items="alumnos"
+                    :search="search"
+                    class="elevation-0 bg-transparent text-gray-800"
+                    hover
+                >
+                    <template v-slot:item.matricula="{ item }">
+                        <span class="font-mono text-indigo-700 font-bold">#{{ item.matricula.toString().padStart(5, '0') }}</span>
+                    </template>
+                    <template v-slot:item.nombre_diplomado="{ item }">
+                        <v-chip color="info" size="small" variant="flat" prepend-icon="mdi-school">{{ item.nombre_diplomado }}</v-chip>
+                    </template>
+                    <template v-slot:item.telefono="{ item }">
+                        <span class="font-medium text-gray-600"><v-icon size="small" class="mr-1">mdi-phone</v-icon>{{ item.telefono || 'N/A' }}</span>
+                    </template>
+                </v-data-table>
+            </div>
+        </v-card>
 
-
+      </div>
     </div>
+  </AuthenticatedLayout>
 </template>
-<style>
-.mycard {
-    /* width: 1400px; Eliminado */
-    justify-content: center;
-    text-align: center;
-    position: absolute;
-    top: 30%;
-    left: 0;
-    right: 0;
-    transform: translateY(-50%);
-    background-color: rgba(255, 255, 255, 0.9);
-    z-index: -2;
-}
-</style>
+
 <script>
-import Estadisticas from "./Estadisticas.vue";
+import axios from 'axios';
+import { router } from '@inertiajs/vue3';
 
 export default {
-
-    created() {
-        this.obtenerDiplomados();
-
+  data() {
+    return {
+      search: '',
+      alumnos: [],
+      importingAdmissions: false,
+      importingHistorical: false,
+      headers: [
+        { title: "Matrícula", key: "matricula", sortable: true, width: "120px" },
+        { title: "Nombre Completo del Estudiante", key: "nombre_completo", sortable: true },
+        { title: "Programa Académico (Diplomado)", key: "nombre_diplomado", sortable: true },
+        { title: "Fecha Ingreso", key: "fecha_nacimiento", align: "center" },
+        { title: "Contacto", key: "telefono", sortable: false },
+        { title: "Ref. Adicional", key: "correo", sortable: false },
+      ]
+    };
+  },
+  created() {
+    this.obtenerAlumnos();
+  },
+  methods: {
+    obtenerAlumnos() {
+      axios.get('/api/v1/alumnos_api2024A/')
+        .then(response => {
+          this.alumnos = response.data.alumnos;
+        })
+        .catch(err => {
+          console.error(err);
+        });
     },
+    handleFileUpload(event, type) {
+      const file = event.target.files[0];
+      if (!file) return;
 
+      if (type === 'admissions') this.importingAdmissions = true;
+      if (type === 'historical') this.importingHistorical = true;
 
-    components: {
-        Estadisticas,
-    },
+      const formData = new FormData();
+      formData.append('file', file);
 
+      const url = type === 'admissions' ? '/alumnos/import/admissions' : '/alumnos/import/historical';
 
-    methods: {
-        obtenerDiplomados() {
-            axios.get('/api/v1/alumnos_api2024A/')
-                .then(response => {
-
-                    this.alumnos = response.data.alumnos;
-
-                    console.log(response)
-                })
-                .catch(err => {
-                    console.error(err);
-                })
-
+      router.post(url, formData, {
+        onSuccess: () => {
+          this.importingAdmissions = false;
+          this.importingHistorical = false;
+          this.obtenerAlumnos();
+          alert('Importación completada exitosamente.');
+        },
+        onError: (errors) => {
+          this.importingAdmissions = false;
+          this.importingHistorical = false;
+          alert('Hubo un error al importar: ' + Object.values(errors).join(', '));
+        },
+        onFinish: () => {
+          this.importingAdmissions = false;
+          this.importingHistorical = false;
+          event.target.value = ''; // Reset input
         }
-
-    },
-
-    data() {
-        return {
-            mostrarDialog1:false,
-            mostrarDialog2:false,
-            mostrarDialog3:false,
-
-            headers: [
-                {
-                    align: "start",
-                    key: "name",
-                    sortable: false,
-                },
-                { key: "nombre_completo", title: "Nombre" },
-                { key: "matricula", title: "Matricula" },
-                { key: "nombre_diplomado", title: "Diplomado" },
-
-                { key: "fecha_nacimiento", title: "Fecha de Nacimiento" },
-                { key: "correo", title: "Correo" },
-                { key: "telefono", title: "Telefono" },
-                { key: "direccion", title: "Direccion" },
-            ],
-
-            alumnos: [],
-
-            search: '',
-
-        }
-    },
+      });
+    }
+  }
 };
 </script>
-
-
-<style scoped>
-/* Estilos específicos para esta vista */
-</style>

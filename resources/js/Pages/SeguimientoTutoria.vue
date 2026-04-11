@@ -5,519 +5,409 @@ import axios from "axios";
 import swal from "sweetalert";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
-import { provide } from "vue";
 
 const page = usePage();
-console.log("page", page.props);
-
 const userId = page.props.userId;
-console.log("user id  ", userId);
 </script>
 
 <template>
-    <v-app>
-        <v-container class="my-8">
-            <v-row>
-                <v-col cols="12" sm="15">
-                    <v-row align="center">
-                        <v-col cols="10">
-                            <v-text-field v-model="busqueda" label="Buscar por matrícula o nombre" outlined dense
-                                variant="solo" prepend-icon="mdi-account-search-outline"></v-text-field>
-                        </v-col>
-                        <v-col cols="2">
-                            <v-btn @click="buscarAlumnos" color="primary" dark block>
-                                <v-icon>mdi-magnify</v-icon>
-                            </v-btn>
-                            <v-btn @click="limpiarBusqueda" color="error" dark block>
-                                <v-icon>mdi-backspace-outline</v-icon>
-                            </v-btn>
-                        </v-col>
-                    </v-row>
-                </v-col>
-            </v-row>
+    <v-app class="bg-gray-50">
+        <v-container class="my-4 max-w-7xl">
+            <div class="mb-4">
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <v-icon color="success" class="mr-2">mdi-account-cash</v-icon>
+                    Asignación de Primera Colegiatura
+                </h2>
+                <p class="text-sm text-gray-500">
+                    Alumnos de nuevo ingreso esperando la validación académica mediante alta del primer pago (Apertura de Expediente).
+                </p>
+            </div>
 
-            <v-card class="mx-auto" max-width="100%" color="white">
-                <v-virtual-scroll :items="alumnosFiltrados" item-height="100" style="margin-top: 10px;">
-                  <template v-slot:default="{ item: alumnos }">
-                    <v-list-item class="custom-list-item" elevation="16">
-                      <v-list-item-content class="custom-list-content">
-                        <v-list-item-title class="font-weight-bold">
-                          <div class="flex flex-col sm:flex-row items-start sm:items-center">
-                            <v-chip color="blue-darken-4" class="mb-2 sm:mb-0 sm:mr-2">
-                              <v-icon icon="mdi-account-circle-outline" start></v-icon>
-                              {{ alumnos.nombre_alumno }}
-                            </v-chip>
-                            <v-chip color="primary" variant="flat" prepend-icon="mdi-account-multiple">
-                              {{ alumnos.nombre_diplomado }}
-                            </v-chip>
-                          </div>
-                        </v-list-item-title>
-                      </v-list-item-content>
-                      <v-list-item-action>
-                        <v-dialog max-width="1000">
-                          <template v-slot:activator="{ props: activatorProps }">
-                            <v-btn v-bind="activatorProps" height="40" class="text-none mb-4" color="green" size="large" prepend-icon="mdi-credit-card-outline"
-                              @click="obtenerPagosColegiaturas(alumnos.alumno_id, alumnos.diplomado_id, alumnos.nombre_alumno)">
-                              Agregar Primera Colegiatura
-                            </v-btn>
-                          </template>
-                          <template v-slot:default="{ isActive }">
-                            <v-card>
-                              <v-card-text>
-                                <v-card class="mx-auto" color="white" max-width="100%" min-height="auto" variant="flat">
-                                  <v-sheet color="indigo" class="py-2 px-4">
-                                    <v-card-item class="flex-wrap">
-                                      <template v-slot:prepend>
-                                        <v-card-title class="flex items-center justify-start sm:justify-between w-full sm:w-auto">
-                                          <v-icon icon="mdi-account-circle" start class="mr-2"></v-icon>
-                                          <span class="text-body-1">{{ alumnos.nombre_alumno }}</span>
-                                        </v-card-title>
-                                      </template>
-                                      <v-divider class="my-2 sm:mx-2" vertical></v-divider>
-                                      <template v-slot:append>
-                                        <v-btn class="ms-0 sm:ms-4 text-none text-body-1 mt-2 sm:mt-0" color="red" size="small" variant="flat">
-                                          Pendiente ${{ alumnos.saldo }}
-                                        </v-btn>
-                                      </template>
-                                    </v-card-item>
-                                  </v-sheet>
-                                  <v-card class="ma-4"  rounded="lg" variant="flat">
-                                    <v-card-item>
-                                      <v-card-title class="text-body-2 d-flex align-center flex-wrap">
-                                        <v-icon color="#949cf7" icon="mdi-calendar" start class="mr-2"></v-icon>
-                                        <span class="text-medium-emphasis font-weight-bold">
-                                          Fecha de Inscripcion : {{ alumnos.fecha_inscripcion }}
-                                        </span>
+            <!-- DASHBOARD DE RENDIMIENTO/KPI DEL TUTOR -->
+            <v-card v-if="kpiData" variant="outlined" class="bg-indigo-900 border-gray-200 shadow-sm rounded-xl overflow-hidden mb-8">
+                <div class="p-6 text-white grid grid-cols-1 md:grid-cols-2 items-center gap-6">
+                    <div>
+                        <h3 class="text-xl font-bold mb-1 flex items-center">
+                            <v-icon color="yellow" class="mr-2">mdi-trophy-award</v-icon>
+                            Rendimiento Mensual de Tutor: Cierre de Matrículas
+                        </h3>
+                        <p class="text-indigo-200 text-sm">
+                            Este KPI mide tus inscripciones realizadas exitosamente (las que ya cobraron su primera colegiatura) meta global 20 mensuales.
+                        </p>
+                    </div>
+                    
+                    <div class="bg-indigo-800/50 p-4 rounded-xl border border-indigo-700/50">
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="text-sm font-medium text-indigo-100">Progreso a la meta</span>
+                            <span class="text-2xl font-bold font-mono">{{ kpiData.cerradas }} <span class="text-lg text-indigo-300">/ {{ kpiData.meta }}</span></span>
+                        </div>
+                        <v-progress-linear
+                            :model-value="(kpiData.cerradas / kpiData.meta) * 100"
+                            color="success"
+                            bg-color="indigo-darken-3"
+                            height="12"
+                            rounded
+                            striped
+                        ></v-progress-linear>
+                        <div class="flex justify-between items-center mt-2 text-xs">
+                            <span class="text-indigo-300">0%</span>
+                            <span v-if="kpiData.cerradas >= kpiData.meta" class="text-green-300 font-bold">¡Meta Alcanzada! 🎉</span>
+                            <span v-else class="text-yellow-300">Faltan {{ kpiData.meta - kpiData.cerradas }} expedientes para tu cuota.</span>
+                            <span class="text-indigo-300">100%</span>
+                        </div>
+                    </div>
+                </div>
+            </v-card>
 
-                                        <v-chip class="w-full sm:w-auto" color="primary" variant="flat" prepend-icon="mdi-account-multiple">
-                                            Campaña {{ alumnos.campaña }}
-                                          </v-chip>
-                                          <v-chip class="w-full sm:w-auto" color="primary" variant="flat" prepend-icon="mdi-account-multiple">
-                                            Grupo {{ alumnos.grupo }}
-                                          </v-chip>
-                                          <v-chip class="w-70 sm:w-auto" color="green" variant="flat" prepend-icon="mdi-account-multiple">
-                                            {{ alumnos.nombre_diplomado }}
-                                          </v-chip>
-                                          <v-chip color="indigo" variant="flat">  Inscripcion   ${{ alumnos.monto_inscripcion }}</v-chip>
+            <v-card variant="outlined" class="bg-white border-gray-200 shadow-sm rounded-xl overflow-hidden mb-6">
+                <div class="bg-gray-100 px-6 py-4 flex flex-col md:flex-row items-center justify-between border-b gap-4">
+                    <div class="w-full md:w-5/12">
+                        <v-text-field
+                            v-model="busqueda"
+                            placeholder="Buscar alumno..."
+                            variant="solo"
+                            density="comfortable"
+                            hide-details
+                            prepend-inner-icon="mdi-magnify"
+                            class="shadow-sm rounded-lg bg-white"
+                            @keyup.enter="buscarAlumnos"
+                        ></v-text-field>
+                    </div>
 
-                                      </v-card-title>
-                                      <v-container>
-                                        <v-col v-for="(pago, index) in pagosColegiaturaAlumno2" :key="index">
-                                          <v-card>
-                                            <v-card-title></v-card-title>
+                    <!-- NUEVO FILTRO DE DIPLOMADOS -->
+                    <div class="w-full md:w-5/12">
+                        <v-select
+                            v-model="filtroDiplomado"
+                            :items="listaDiplomadosUnicos"
+                            label="Filtrar por Diplomado"
+                            variant="solo"
+                            density="comfortable"
+                            hide-details
+                            clearable
+                            prepend-inner-icon="mdi-filter-variant"
+                            class="shadow-sm rounded-lg bg-white"
+                            @update:modelValue="aplicarFiltros"
+                        ></v-select>
+                    </div>
 
-                                            <v-card-text>
-                                                <p class="text-red-800 font-medium">
-                                                     Sin pagos registrados
-                                                  </p>
-                                              <a href="#" class="block bg-white py-3 border-t">
-                                                <div class="px-4 py-2 flex flex-col sm:flex-row justify-between">
+                    <div class="w-full md:w-2/12 flex space-x-2">
+                        <v-btn @click="buscarAlumnos" color="indigo-darken-3" class="flex-1" variant="elevated" prepend-icon="mdi-magnify">Filtrar</v-btn>
+                        <v-btn @click="limpiarBusqueda" color="grey-darken-1" variant="tonal" icon="mdi-eraser"></v-btn>
+                    </div>
+                </div>
 
-                                                  <div class="text-green-darken-3 text-h6 font-weight-bold">
-                                                    $ {{ pago.pago_colegiatura }} MXN
-                                                  </div>
-                                                  <span class="text-sm font-semibold text-gray-600">
-                                                    Fecha de Pago: {{ pago.Fecha_PrimerContacto }}
-                                                  </span>
-                                                  <span class="text-sm font-semibold text-gray-900">
-                                                    ID pago: {{ pago.idpago }}
-                                                  </span>
-                                                  <span class="text-sm font-semibold text-gray-900">
-                                                    Tutor: {{ pago.Tutor }}
-                                                  </span>
-                                                  <span class="text-sm font-semibold text-gray-900">
-                                                    Asesor: {{ pago.Asesor }}
-                                                  </span>
+                <v-list class="bg-transparent px-4 py-4">
+                    <v-virtual-scroll :items="alumnosFiltrados" item-height="85" style="max-height: 55vh;">
+                        <template v-slot:default="{ item: alumno }">
+                            <v-list-item class="mb-3 border border-gray-100 shadow-sm rounded-lg bg-white overflow-hidden transition-all hover:border-indigo-300">
+                                <template v-slot:prepend>
+                                    <v-avatar color="green-lighten-4" size="48" class="mr-4">
+                                        <v-icon color="green-darken-4">mdi-account-school</v-icon>
+                                    </v-avatar>
+                                </template>
+                                <v-list-item-title class="font-bold text-gray-800 text-base">
+                                    {{ alumno.nombre_alumno }}
+                                </v-list-item-title>
+                                <v-list-item-subtitle class="text-sm text-gray-500">
+                                    <v-chip size="x-small" color="indigo" class="mr-2">{{ alumno.nombre_diplomado }}</v-chip>
+                                    Balance Restante Global: <span class="text-red-500 font-bold">${{ alumno.saldo }} MXN</span>
+                                </v-list-item-subtitle>
+                                
+                                <template v-slot:append>
+                                    <!-- DIALOG DE COBRO MODO APERTURA -->
+                                    <v-dialog max-width="850">
+                                        <template v-slot:activator="{ props: activatorProps }">
+                                            <v-btn
+                                                v-bind="activatorProps"
+                                                color="success"
+                                                variant="flat"
+                                                size="small"
+                                                prepend-icon="mdi-file-document-edit"
+                                                @click="prepararCobro(alumno.alumno_id, alumno.diplomado_id, alumno.nombre_alumno, alumno)"
+                                            >
+                                                Timbrar Colegiatura
+                                            </v-btn>
+                                        </template>
+
+                                        <template v-slot:default="{ isActive }">
+                                            <v-card rounded="xl" class="overflow-hidden">
+                                                <div class="bg-indigo-900 px-6 py-4 flex justify-between items-center text-white">
+                                                    <div>
+                                                        <h3 class="text-lg font-medium flex items-center">
+                                                            <v-icon color="success" class="mr-2">mdi-point-of-sale</v-icon>
+                                                            Apertura de Expediente Financiero
+                                                        </h3>
+                                                        <p class="text-indigo-200 text-xs">Alumno en proceso: {{ alumno.nombre_alumno }}</p>
+                                                    </div>
                                                 </div>
-                                                <div class="px-4 py-2 flex flex-col">
-                                                  <span class="text-sm font-semibold text-gray-900">
-                                                    {{ pago.Titular }}
-                                                  </span>
-                                                  <span class="text-sm font-semibold text-gray-900">
-                                                    No Cuenta: {{ pago.numero_cuenta }}
-                                                  </span>
-                                                  <span class="text-sm font-semibold text-gray-900">
-                                                    {{ pago.CLABE }}
-                                                  </span>
-                                                  <span class="text-sm font-semibold text-gray-900">
-                                                    {{ pago.banco }}
-                                                  </span>
-                                                </div>
-                                              </a>
-                                            </v-card-text>
 
-                                          </v-card>
-                                        </v-col>
-                                      </v-container>
-                                    </v-card-item>
-                                  </v-card>
-                                </v-card>
-                                <form class="max-w-full m-4 p-10 bg-gray-50 rounded shadow-xl" @submit.prevent="EnviarPago">
-                                  <p class="text-gray-800 font-medium">
-                                    Captura el pago de Colegiatura
-                                  </p>
-                                  <div class="mb-6">
-                                    <div class="d-flex align-items-center">
-                                      <v-chip class="ma-2" color="deep-orange-darken-4">Monto</v-chip>
-                                      <v-text-field v-model="pago_colegiatura" color="green" class="white" variant="outlined" type="number">
-                                        $
-                                      </v-text-field>
-                                    </div>
-                                  </div>
-                                  <div class="mb-6">
-                                    <div class="d-flex align-items-center">
-                                      <v-chip class="ma-2" color="black">Alumno</v-chip>
-                                      <select v-model="alumno_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4 focus:border-deep-orange-darken-4 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4 dark:focus:border-deep-orange-darken-4">
-                                        <option disabled selected>Selecciona</option>
-                                        <option v-for="pago in uniqueDiplomados" :key="pago.id" :value="pago.id">
-                                          <div class="mb-6">
-                                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300"></label>
-                                            <v-text-field required readonly color="blue" variant="outlined" class="w-full px-4 py-2">
-                                              {{ alumnos.nombre_alumno }}
-                                            </v-text-field>
-                                          </div>
-                                        </option>
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div class="mb-6">
-                                    <div class="d-flex align-items-center">
-                                      <v-chip class="ma-2" color="black">Diplomado</v-chip>
-                                      <select v-model="diplomado_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4 focus:border-deep-orange-darken-4 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4 dark:focus:border-deep-orange-darken-4">
-                                        <option disabled selected>Selecciona</option>
-                                        <option v-for="pago in uniqueDiplomados" :key="pago.id" :value="pago.diplomado_id">
-                                          <div class="mb-6">
-                                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300"></label>
-                                            <v-text-field required readonly color="blue" v-model="asesor" variant="outlined" class="w-full px-4 py-2">
-                                              {{ alumnos.nombre_diplomado }}
-                                            </v-text-field>
-                                          </div>
-                                        </option>
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div class="mb-6">
-                                    <div class="d-flex align-items-center">
-                                      <v-chip class="ma-2" color="black">No de Cuenta</v-chip>
-                                      <select v-model="selectedTitular" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-deep-orange-darken-4 focus:border-deep-orange-darken-4 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-deep-orange-darken-4 dark:focus:border-deep-orange-darken-4">
-                                        <option disabled selected>Selecciona un Numero de Cuenta</option>
-                                        <option v-for="titular in cuentaDeposito" :key="titular.id" :value="titular.id">
-                                          {{ titular.titular }}
-                                          <option>
-                                            {{ titular.CLABE }}
-                                          </option>
-                                        </option>
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div class="mb-6">
-                                    <div class="d-flex align-items-center">
-                                      <v-chip class="ma-2" color="black">Fecha</v-chip>
-                                      <v-text-field label="Fecha" required readonly color="black" v-model="fecha_inscripcion" type="date" variant="outlined" class="w-full px-4 py-2"></v-text-field>
-                                    </div>
-                                  </div>
+                                                <v-card-text class="bg-gray-50 p-6">
+                                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                                        <!-- FORMULARIO DE COBRO -->
+                                                        <div>
+                                                            <div class="flex items-center justify-between mb-4 border-b pb-2">
+                                                                <h4 class="text-gray-700 font-bold">Datos del Cobro Inicial</h4>
+                                                                <v-chip size="small" color="red" variant="flat">Deuda: ${{ alumno.saldo }}</v-chip>
+                                                            </div>
 
-                                  <div class="flex items-start mb-6">
-                                    <div class="flex items-center h-5">
-                                        <input id="remember" type="checkbox" value="" class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800" required>
-                                    </div>
-                                    <label for="remember" class="ml-2 text-sm text-gray-900 dark:text-gray-400">Los datos ingresados son correctos.</label>
-                                </div>
+                                                            <form @submit.prevent="EnviarPago(isActive)" class="space-y-4">
+                                                                <!-- Monto OBLIGATORIO -->
+                                                                <v-text-field 
+                                                                    v-model.number="pago_colegiatura" 
+                                                                    label="Importe 1ª Colegiatura (MXN)" 
+                                                                    variant="outlined" 
+                                                                    density="comfortable" 
+                                                                    type="number" 
+                                                                    prefix="$" 
+                                                                    bg-color="white" 
+                                                                    :max="alumno.saldo"
+                                                                    :rules="[
+                                                                        v => !!v || 'Requerido',
+                                                                        v => v > 0 || 'Debe ser mayor a 0',
+                                                                        v => v <= parseFloat(alumno.saldo) || `El tope es la deuda: $${alumno.saldo}`
+                                                                    ]"
+                                                                    required>
+                                                                </v-text-field>
 
-                                  <v-btn color="green" size="large" variant="elevated" type="submit" prepend-icon="mdi-send">Enviar</v-btn>
-                                  <v-btn @click="limpiarFormulario" color="red" size="large" variant="elevated" prepend-icon="mdi-eraser">Vaciar</v-btn>
+                                                                <div class="grid grid-cols-2 gap-4">
+                                                                    <v-text-field v-model="fecha_inscripcion" label="Fecha Bancaria (Sistema Automático)" variant="filled" density="comfortable" type="date" readonly bg-color="gray-100" class="text-gray-500" hint="La fecha no puede ser alterada por motivos de Auditoría." persistent-hint></v-text-field>
+                                                                    
+                                                                    <v-select
+                                                                        v-model="selectedTitular"
+                                                                        :items="cuentaDeposito"
+                                                                        item-title="banco"
+                                                                        item-value="id"
+                                                                        label="Cta. Receptora"
+                                                                        variant="outlined"
+                                                                        density="comfortable"
+                                                                        bg-color="white"
+                                                                        required
+                                                                    >
+                                                                         <template v-slot:item="{ props, item }">
+                                                                            <v-list-item v-bind="props" :title="item.raw.banco" :subtitle="`T: ${item.raw.titular} (CLABE: ${item.raw.CLABE})`"></v-list-item>
+                                                                        </template>
+                                                                        <template v-slot:selection="{ item }">
+                                                                            <span>{{ item.raw.banco }}</span>
+                                                                        </template>
+                                                                    </v-select>
+                                                                </div>
 
-                                </form>
-                              </v-card-text>
-                              <v-card-actions>
-                                <v-spacer></v-spacer>
-                                <v-btn text="Cerrar" @click="isActive.value = false"></v-btn>
-                              </v-card-actions>
-                            </v-card>
-                          </template>
-                        </v-dialog>
-                      </v-list-item-action>
-                    </v-list-item>
-                  </template>
-                </v-virtual-scroll>
-              </v-card>
+                                                                <v-file-input
+                                                                    v-model="comprobante"
+                                                                    label="Comprobante Bancario (PDF o Imagen)"
+                                                                    variant="outlined"
+                                                                    density="comfortable"
+                                                                    bg-color="white"
+                                                                    prepend-icon="mdi-cloud-upload"
+                                                                    accept="image/*,application/pdf"
+                                                                    :rules="[v => !!v || 'Debe subir el ticket de pago forzosamente']"
+                                                                    required
+                                                                ></v-file-input>
 
+                                                                <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg flex items-start text-xs text-blue-800 mt-2">
+                                                                    <v-icon color="info" size="small" class="mr-2 mt-0.5">mdi-shield-check</v-icon>
+                                                                    Aprobar este pago desbloqueará al alumno administrativamente en sistema y generará su PDF Académico oficial.
+                                                                </div>
 
+                                                                <div class="pt-2">
+                                                                    <v-btn type="submit" color="success" size="large" block variant="elevated" prepend-icon="mdi-printer-pos">Aprobar Pago y Generar Ficha PDF</v-btn>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+
+                                                        <!-- RESUMEN ACADEMICO E INDICADOR -->
+                                                        <div>
+                                                            <div class="mb-4 border-b pb-2">
+                                                                <h4 class="text-gray-700 font-bold">Resumen Base</h4>
+                                                            </div>
+                                                            
+                                                            <v-list class="bg-white rounded-lg shadow-sm border border-gray-100">
+                                                                <v-list-item>
+                                                                    <template v-slot:prepend><v-icon color="indigo">mdi-school</v-icon></template>
+                                                                    <v-list-item-title class="text-sm font-bold">{{ alumno.nombre_diplomado }}</v-list-item-title>
+                                                                    <v-list-item-subtitle class="text-xs">Programa Formativo</v-list-item-subtitle>
+                                                                </v-list-item>
+                                                                <v-divider></v-divider>
+                                                                <v-list-item>
+                                                                    <template v-slot:prepend><v-icon color="indigo">mdi-tag</v-icon></template>
+                                                                    <v-list-item-title class="text-sm font-bold">Aportó Inscripción: ${{ alumno.monto_inscripcion }} mxn</v-list-item-title>
+                                                                    <v-list-item-subtitle class="text-xs">Día {{ alumno.fecha_inscripcion }} | Gpo. {{ alumno.grupo }}</v-list-item-subtitle>
+                                                                </v-list-item>
+                                                            </v-list>
+
+                                                            <div class="mt-6 text-center text-gray-400 p-4 border-2 border-dashed border-gray-200 rounded-lg">
+                                                                <v-icon size="x-large" class="mb-2">mdi-account-clock</v-icon><br>
+                                                                <span class="text-sm">Expediente esperando su primera mensualidad para cierre.</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </v-card-text>
+
+                                                <v-card-actions class="bg-gray-100 px-6 py-3 justify-end border-t">
+                                                    <v-btn variant="text" color="grey-darken-3" prepend-icon="mdi-close" @click="isActive.value = false; limpiarFormulario()">Cancelar</v-btn>
+                                                </v-card-actions>
+                                            </v-card>
+                                        </template>
+                                    </v-dialog>
+                                </template>
+                            </v-list-item>
+                        </template>
+                    </v-virtual-scroll>
+                </v-list>
+            </v-card>
         </v-container>
     </v-app>
 </template>
 
-<style scoped>
-@media (max-width: 639px) {
-    .text-sm {
-      font-size: 0.875rem; /* Tailwind text-sm */
-    }
-
-    .w-full {
-      width: 100%;
-    }
-  }
-
-.v-card-item {
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-  }
-
-  @media (min-width: 640px) {
-    .v-card-item {
-      flex-direction: row;
-      align-items: center;
-    }
-  }
-.custom-list-item {
-  border-radius: 8px;
-  margin: 10px;
-}
-
-.custom-list-content {
-  padding: 10px; /* Espaciado interno */
-}
-
-.custom-btn {
-  background-color: rgb(7, 121, 16); /* Color de fondo personalizado */
-  color: white; /* Color del texto personalizado */
-  text-align: left;
-  justify-content: left;
-  border: 1px solid teal; /* Borde personalizado */
-}
-
-.custom-btn:hover {
-  background-color: #26a01b; /* Cambiar color al pasar el ratón sobre el botón */
-}
-</style>
-
 <script>
-import Swal from "sweetalert"; // Asegúrate de usar "sweetalert2"
-import { ref } from "vue";
+import swal from "sweetalert";
 import { usePage } from "@inertiajs/vue3";
 import axios from "axios";
 
 export default {
     data() {
         return {
-            alumno_id: null, // Variable para almacenar el ID del alumno de forma segura
-
-            busqueda: "",
+            alumno_id: null,
             diplomado_id: null,
+            busqueda: "",
+            filtroDiplomado: null,
             pendienteMesUser: [],
             alumnosFiltrados: [],
-            dialog: false,
-            alumnoSeleccionado: [],
             pago_colegiatura: null,
-            fecha: null,
-            mostrarDialog1: false,
-            mostrarDialog2: false,
-            mostrarDialog3: false,
-            selectedAlumno: null,
-            selectedDiplomado: null,
             selectedTitular: null,
-            Alumnos: [],
-            alumnoSeleccionadoId: null,
-            search: "",
             fecha_inscripcion: null,
-            NombreDiplomado: [],
             cuentaDeposito: [],
-            pagosColegiaturaAlumno2: [],
-            alumnoIdSeleccionado: null,
-            userId: null, // Definir userId aquí
+            userId: usePage().props.userId,
+            alumnoSeleccionadoData: null,
+            comprobante: null,
+            kpiData: null,
         };
+    },
+    computed: {
+        listaDiplomadosUnicos() {
+            // Extraer nombres únicos de diplomados para el v-select
+            const unicos = new Set();
+            this.pendienteMesUser.forEach(item => {
+                if(item.nombre_diplomado) unicos.add(item.nombre_diplomado);
+            });
+            return Array.from(unicos);
+        }
     },
     created() {
         this.obtenerNumeroCuenta();
         this.setFechaActual();
         this.obtenerListaAlumnos();
     },
-
-    computed: {
-        uniquePagos() {
-            const seen = new Set();
-            return this.pagosColegiaturaAlumno2.filter((pago) => {
-                const isDuplicate = seen.has(pago.nombre_alumno);
-                seen.add(pago.nombre_alumno);
-                return !isDuplicate;
-            });
-        },
-        uniqueDiplomados() {
-            return this.pagosColegiaturaAlumno2;
-        },
-    },
-    mounted() { },
-
     methods: {
-
         limpiarFormulario() {
-
-this.pago_colegiatura = '';
-this.selectedTitular = null;
-this.monto_inscripcion = '';
-this.fecha_primer_pago_colegiatura = '';
-},
-
-        EnviarPago() {
-            const page = usePage();
-            console.log("page", page.props);
-
-            const userId = page.props.userId;
-            console.log("user id  ", userId);
-
-            const inscripcion = {
-                Fecha_PrimerContacto: this.fecha_inscripcion,
-                pago_colegiatura: this.pago_colegiatura,
-                tutor: userId, // Usar el id del tutor pasado como prop
-                status: "Activo",
-                cuentadeposito: this.selectedTitular,
-                alumno_id: this.alumno_id, // Usando alumnos.alumno_id
-                diplomado_id: this.diplomado_id,
-            };
-
-            console.log("datos a enviar ", inscripcion);
-            axios
-                .post("/api/v1/pagosabonos/crear", inscripcion)
-                .then((res) => {
-                    console.log(res);
-                    console.log("Datos de PAGOS enviados:", inscripcion);
-
-                    swal("Pago registrado con éxito", "success");
-                    this.pago_colegiatura = "";
-                    this.selectedTitular = "";
-                    this.obtenerListaAlumnos();
-                })
-                .catch((err) => {
-                    swal("Llenar completamente los campos");
-                    console.error(err);
-                });
+            this.pago_colegiatura = '';
+            this.selectedTitular = null;
+            this.comprobante = null;
         },
 
-        obtenerPagosColegiaturas(alumno_id, diplomado_id) {
-            console.log("Valor de diplomado :", diplomado_id);
-            console.log("Valor de alumno_id:", alumno_id);
+        prepararCobro(aId, dId, nNombre, infoCompleta) {
+            this.alumno_id = aId;
+            this.diplomado_id = dId;
+            this.alumnoSeleccionadoData = infoCompleta;
+            // Al ser primera vez, no hace falta llamar el historial (por regla de negocio están vacíos)
+        },
 
-            // Verificar si alguno de los valores es nulo
-            if (alumno_id === null || diplomado_id === null) {
-                console.log(
-                    "Alumno_id o diplomado_id es nulo. No se puede realizar la solicitud."
-                );
-                return; // Salir de la función
+        EnviarPago(isActiveContext) {
+            if(!this.pago_colegiatura || !this.selectedTitular || !this.fecha_inscripcion || !this.comprobante){
+                swal("Advertencia", "Los campos bancarios, importe y comprobante son requeridos obligatoriamente.", "warning"); return;
             }
 
-            const url = `/api/v1/mostrar/alumno/show_sinpago/${alumno_id}`;
+            if(this.pago_colegiatura <= 0) {
+                 swal("Advertencia", "El monto ingresado debe ser superior a 0.", "warning"); return;
+            }
 
-            console.log("Consulta enviada:", url);
-            this.enviarDatos(alumno_id, diplomado_id);
+            if(this.pago_colegiatura > this.alumnoSeleccionadoData.saldo) {
+                 swal("Monto No Permitido", `Has ingresado $${this.pago_colegiatura}, pero este alumno sólo debe $${this.alumnoSeleccionadoData.saldo} del curso. No se permiten cobros exorbitantes.`, "error"); return;
+            }
 
-            axios
-                .get(url)
+            let formData = new FormData();
+            formData.append('Fecha_PrimerContacto', this.fecha_inscripcion);
+            formData.append('pago_colegiatura', this.pago_colegiatura);
+            formData.append('tutor', this.userId);
+            formData.append('status', 'Activo');
+            formData.append('cuentadeposito', this.selectedTitular);
+            formData.append('alumno_id', this.alumno_id);
+            formData.append('diplomado_id', this.diplomado_id);
+            formData.append('comprobante', this.comprobante);
+
+            axios.post("/api/v1/pagosabonos/crear", formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
                 .then((res) => {
-                    console.log("Valor de alumno_id 2:", alumno_id);
-                    this.pagosColegiaturaAlumno2 = res.data.pagosColegiaturaAlumno2;
-                    console.log("colegiaturas del alumno", res.data);
+                    swal("Apertura Completada", "Alumno liberado. Su recibo oficial se generará en este momento...", "success");
+                    
+                    // Extraer ID y descargar el archivo PDF Oficial Laravel-dompdf autogenerado.
+                    const idPagoPdf = res.data.pago.id;
+                    setTimeout(() => {
+                        window.open('/pagos/' + idPagoPdf + '/pdf', '_blank');
+                    }, 1000);
+
+                    this.limpiarFormulario();
+                    this.obtenerListaAlumnos(); // Refrescar lista maestra, el alumno al tener 1 pago, desaparecerá de "tutorias pendientes" si la consulta de backend así lo dicta.
+                    if(isActiveContext) isActiveContext.value = false; // Cerramos modal.
                 })
                 .catch((err) => {
+                    swal("Error de Comunicación", "Falló el timbrado con el servidor.", "error");
                     console.error(err);
-                })
-                .finally(() => {
-                    // Reiniciar el valor de alumno_id a null después de que termine la petición
-                    this.alumno_id = null;
-                    this.diplomado_id = null;
-                    console.log("Valor de reiniciado:", alumno_id, diplomado_id);
                 });
-        },
-
-        enviarDatos(alumno_id, diplomado_id) {
-            // Aquí puedes enviar los datos a otra parte de tu código o a una API
-            console.log("Enviando datos:");
-            console.log("Alumno ID:", alumno_id);
-            console.log("Diplomado ID:", diplomado_id);
         },
 
         obtenerNumeroCuenta() {
-            axios
-                .get("/api/v1/cuentadeposito/index/2024/numero")
-                .then((res) => {
-                    this.cuentaDeposito = res.data.cuentaDeposito;
-                    console.log(res);
-                })
-                .catch((err) => {
-                    console.error(err);
-                });
+            axios.get("/api/v1/cuentadeposito/index/2024/numero")
+                .then((res) => this.cuentaDeposito = res.data.cuentaDeposito)
+                .catch((err) => console.error(err));
         },
-        buscarAlumnos() {
-            if (this.busqueda.trim() === "") {
-                // Si la búsqueda está vacía, mostrar todos los alumnos
-                this.alumnosFiltrados = this.pendienteMesUser.map((alumno) => ({
-                    ...alumno,
-                }));
-            } else {
-                // Filtrar los alumnos basados en la búsqueda
-                this.alumnosFiltrados = this.pendienteMesUser
-                    .filter((alumno) => {
-                        const nombreCompletoStr = alumno.nombre_alumno
-                            ? String(alumno.nombre_alumno).toLowerCase()
-                            : "";
-                        const busquedaStr = this.busqueda.toLowerCase();
-                        const match = nombreCompletoStr.includes(busquedaStr);
-                        return match;
-                    })
-                    .map((alumno) => ({ ...alumno }));
+
+        aplicarFiltros() {
+            // Método unificado para ejecutar búsqueda textual y dropdown de diplomado
+            let resultados = this.pendienteMesUser;
+
+            // 1. Filtrar por búsqueda de nombre
+            if (this.busqueda.trim() !== "") {
+                const term = this.busqueda.toLowerCase();
+                resultados = resultados.filter(a => String(a.nombre_alumno).toLowerCase().includes(term));
             }
 
-            if (this.alumnosFiltrados.length === 0) {
-                this.mostrarAlertaNoresultados();
+            // 2. Filtrar por el Diplomado Seleccionado
+            if (this.filtroDiplomado) {
+                 resultados = resultados.filter(a => a.nombre_diplomado === this.filtroDiplomado);
             }
+
+            this.alumnosFiltrados = resultados.map(a => ({...a}));
+
+            if(this.alumnosFiltrados.length === 0 && (this.busqueda !== "" || this.filtroDiplomado)){
+                swal({icon: "info", title: "Sin Resultados", text: "No hay alumnos inscritos esperando pago en ese rubro.", buttons: "Entendido"});
+            }
+        },
+
+        buscarAlumnos() {
+             this.aplicarFiltros();
         },
 
         limpiarBusqueda() {
             this.busqueda = "";
-            // Restaurar la lista de alumnos filtrados a la lista completa de alumnos
-            this.alumnosFiltrados = this.pendienteMesUser;
+            this.filtroDiplomado = null;
+            this.alumnosFiltrados = [...this.pendienteMesUser];
         },
 
-        verAlumno(alumno) { },
-        mostrarAlertaNoresultados() {
-            Swal.fire({
-                icon: "info",
-                title: "No se hallaron resultados",
-                text: "No hay alumnos que coincidan con la búsqueda",
-                confirmButtonText: "Aceptar",
-            });
-        },
-        cerrarDialogo() {
-            this.dialog = false;
-            this.alumnoSeleccionado = {};
-        },
         setFechaActual() {
             const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, "0");
-            const day = String(today.getDate()).padStart(2, "0");
-            this.fecha_inscripcion = `${year}-${month}-${day}`;
+            this.fecha_inscripcion = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
         },
-        obtenerListaAlumnos() {
-            axios
-                .get("/api/v1/mensualidad/seguimiento", {})
-                .then((response) => {
-                    console.log("Respuesta de la API:", response.data);
-                    this.pendienteMesUser = response.data.pendienteMesUser;
-                    this.alumnosFiltrados = response.data.pendienteMesUser.map(
-                        (alumnos) => ({ ...alumnos })
-                    ); // Actualizar alumnosFiltrados
-                    // No necesitas asignar alumno_id aquí
 
-                    // Puedes iterar sobre la lista de alumnos y mostrar los ids en la consola
-                    this.pendienteMesUser.forEach((alumnos) => {
-                        console.log("ID del alumno:", alumnos.alumno_id);
-                        console.log("ID del diplomado:", alumnos.diplomado_id);
-                    });
+        obtenerListaAlumnos() {
+            axios.get("/api/v1/mensualidad/seguimiento", { params: { tutor_id: this.userId } })
+                .then((response) => {
+                    this.pendienteMesUser = response.data.pendienteMesUser;
+                    this.alumnosFiltrados = response.data.pendienteMesUser.map(a => ({ ...a }));
+                    this.kpiData = response.data.kpi;
                 })
-                .catch((error) => {
-                    console.error("Error al obtener las alumnos:", error);
-                });
+                .catch((error) => console.error("Error al obtener alumnos rezagados y kpi:", error));
         },
     },
 };

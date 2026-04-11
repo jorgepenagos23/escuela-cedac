@@ -1,0 +1,23 @@
+
+> build
+> vite build
+
+[36mvite v5.2.10 [32mbuilding for production...[36m[39m
+transforming...
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[32m✓[39m 30 modules transformed.
+[31mx[39m Build failed in 1.17s
+[31merror during build:
+SyntaxError: Invalid end tag.
+    at createCompilerError (C:\laragon\www\escuela-cedac\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:1325:17)
+    at emitError (C:\laragon\www\escuela-cedac\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:2788:5)
+    at Object.onclosetag (C:\laragon\www\escuela-cedac\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:2189:9)
+    at Tokenizer.stateInClosingTagName (C:\laragon\www\escuela-cedac\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:749:16)
+    at Tokenizer.parse (C:\laragon\www\escuela-cedac\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:1107:16)
+    at Object.baseParse (C:\laragon\www\escuela-cedac\node_modules\@vue\compiler-core\dist\compiler-core.cjs.prod.js:2820:13)
+    at Object.parse (C:\laragon\www\escuela-cedac\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.prod.js:633:23)
+    at Object.parse$2 [as parse] (C:\laragon\www\escuela-cedac\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1853:24)
+    at createDescriptor (file:///C:/laragon/www/escuela-cedac/node_modules/@vitejs/plugin-vue/dist/index.mjs:74:43)
+    at transformMain (file:///C:/laragon/www/escuela-cedac/node_modules/@vitejs/plugin-vue/dist/index.mjs:2367:34)[39m

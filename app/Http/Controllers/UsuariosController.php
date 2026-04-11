@@ -14,12 +14,14 @@ class UsuariosController extends Controller
 
 
      public function listarAsesores(){
-        $usuarios = User::select(
-            'name',
-            'id'
-
-        )->where('role','tutoria')
-        ->get();
+        // Obtiene usuarios que tengan el rol Spatie 'Tutor' o 'Asesor', o que en la columna nativa tengan 'tutoria' o 'Tutor'
+        $usuarios = User::whereHas('roles', function($q) {
+                $q->whereIn('name', ['Tutor', 'Asesor', 'tutoria']);
+            })
+            ->orWhereIn('role', ['tutoria', 'Tutor', 'Asesor'])
+            ->select('id', 'name')
+            ->distinct()
+            ->get();
 
         return response()->json([
             "asesores"=> $usuarios

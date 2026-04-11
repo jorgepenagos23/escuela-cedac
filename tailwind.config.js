@@ -1,7 +1,7 @@
-const animate = require("tailwindcss-animate")
+import animate from "tailwindcss-animate"
 
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   darkMode: ["class"],
   safelist: ["dark"],
   prefix: "",
@@ -11,7 +11,7 @@ module.exports = {
     './storage/framework/views/*.php',
     './resources/views/**/*.blade.php',
     './resources/js/**/*.{ts,tsx,vue}',
-	],
+  ],
 
   theme: {
     container: {
@@ -58,7 +58,7 @@ module.exports = {
         },
       },
       borderRadius: {
-      	xl: "calc(var(--radius) + 4px)",
+        xl: "calc(var(--radius) + 4px)",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",

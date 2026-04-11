@@ -16,11 +16,12 @@ class Pagos extends Model
         'Fecha_PrimerContacto',
         'pago_colegiatura',
         'status',
+        'motivo_cancelacion',
         'tutor',
         'alumno_id',
         'cuentadeposito	',
         'diplomado_id',
-
+        'comprobante_path',
     ];
 
     protected static function boot()
@@ -47,5 +48,10 @@ class Pagos extends Model
             }
             
         });
+    }
+
+    public function usuarioTutor()
+    {
+        return $this->belongsTo(User::class, 'tutor', 'id');
     }
 }
