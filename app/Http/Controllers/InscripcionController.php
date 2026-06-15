@@ -31,6 +31,57 @@ class InscripcionController extends Controller
     }
 
     /**
+     * API: busca alumnos únicos (sin duplicados) para el flujo de re-inscripción.
+     * Devuelve el perfil de la inscripción más reciente por alumno + conteo de programas previos.
+     */
+    public function buscarAlumnoReingreso(Request $request)
+    {
+        $q = trim($request->query('q', ''));
+
+        // Un ID por alumno único (nombre + curp + celular), tomando el registro más reciente
+        $latestIds = DB::table('alumno_inscripcion')
+            ->select(DB::raw('MAX(id) as id'))
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('nombre_alumno', 'LIKE', "%{$q}%")
+                        ->orWhere('celular',       'LIKE', "%{$q}%")
+                        ->orWhere('correo',        'LIKE', "%{$q}%")
+                        ->orWhere('curp',          'LIKE', "%{$q}%");
+                });
+            })
+            ->groupBy('nombre_alumno', DB::raw("COALESCE(curp, '')"), DB::raw("COALESCE(celular, '')"))
+            ->pluck('id');
+
+        $alumnos = Inscripcion::select(
+            'alumno_inscripcion.id',
+            'alumno_inscripcion.nombre_alumno',
+            'alumno_inscripcion.celular',
+            'alumno_inscripcion.adicional',
+            'alumno_inscripcion.correo',
+            'alumno_inscripcion.curp',
+            'alumno_inscripcion.estado',
+            'alumno_inscripcion.municipio',
+            'alumno_inscripcion.direccion_completa',
+            'alumno_inscripcion.nombre_emergencia',
+            'alumno_inscripcion.parentesco_emergencia',
+            'alumno_inscripcion.metodo_pago_inscripcion',
+            'diplomados.nombre as ultimo_diplomado',
+            DB::raw("(SELECT COUNT(*) FROM alumno_inscripcion b
+                      WHERE b.nombre_alumno = alumno_inscripcion.nombre_alumno
+                      AND COALESCE(b.curp, '')    = COALESCE(alumno_inscripcion.curp, '')
+                      AND COALESCE(b.celular, '') = COALESCE(alumno_inscripcion.celular, '')
+                     ) as total_inscripciones")
+        )
+        ->leftJoin('diplomados', 'diplomados.id', '=', 'alumno_inscripcion.diplomado_id')
+        ->whereIn('alumno_inscripcion.id', $latestIds)
+        ->orderBy('alumno_inscripcion.nombre_alumno')
+        ->limit(50)
+        ->get();
+
+        return response()->json(['alumnos' => $alumnos]);
+    }
+
+    /**
      * API: busca alumnos por nombre, celular o correo (búsqueda en tiempo real)
      */
     public function buscarAlumno(Request $request)
@@ -86,11 +137,12 @@ class InscripcionController extends Controller
             });
         }
 
-        $alumnos = $query->orderBy('alumno_inscripcion.nombre_alumno')->limit(40)->get()
-            ->map(function ($a) {
-                $a->plan_pagos = $a->plan_pagos ? json_decode($a->plan_pagos, true) : [];
-                return $a;
-            });
+        $alumnos = $query->orderBy('alumno_inscripcion.nombre_alumno')->paginate(100);
+
+        $alumnos->getCollection()->transform(function ($a) {
+            $a->plan_pagos = $a->plan_pagos ? json_decode($a->plan_pagos, true) : [];
+            return $a;
+        });
 
         return response()->json(['alumnos' => $alumnos]);
     }
@@ -100,6 +152,13 @@ class InscripcionController extends Controller
      */
     public function actualizarAlumno(Request $request, $id)
     {
+        // Bloqueo estricto: El rol de Admisiones no puede editar datos maestros
+        if (auth()->check() && auth()->user()->hasRole('Admisiones')) {
+            return response()->json([
+                'message' => 'No tienes los privilegios necesarios para editar expedientes creados.'
+            ], 403);
+        }
+
         $inscripcion = Inscripcion::findOrFail($id);
 
         $inscripcion->nombre_alumno          = $request->input('nombre_alumno',          $inscripcion->nombre_alumno);
@@ -327,6 +386,7 @@ class InscripcionController extends Controller
                     'numero'      => $i + 1,
                     'fecha'       => $fechaBase->copy()->addMonths($i)->format('Y-m-d'),
                     'monto'       => $montoEsta,
+                    'abonado'     => 0,
                     'descripcion' => "Mensualidad " . ($i + 1) . " de " . $numCuotas,
                     'estado'      => 'pendiente',
                 ];

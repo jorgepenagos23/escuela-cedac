@@ -12,6 +12,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RolesPermisosController;
 use App\Http\Controllers\DescuentoController;
+use App\Http\Controllers\CuentadeDepositoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,9 +41,7 @@ Route::get('/dashboard', function () {
 
 
 
-Route::get('/estadisticas', function () {
-    return Inertia::render('Estadisticas');
-})->middleware(['auth', 'verified'])->name('Estadisticas');
+Route::get('/estadisticas', [\App\Http\Controllers\EstadisticasController::class, 'index'])->middleware(['auth', 'verified'])->name('Estadisticas');
 
 
 
@@ -71,6 +70,7 @@ Route::get('/crud-alumnos', [AlumnoController::class, 'crudalumnos']);
 Route::get('/crud-pagos', [PagosController::class, 'crudPagos']);
 
 Route::get('/contabilidad', [PagosController::class, 'vistaContabilidad'])->name('vista.contabilidad')->middleware('auth');
+Route::get('/financiero',  [PagosController::class, 'vistaFinanciero'])->name('vista.financiero')->middleware('auth');
 
 
 Route::get('/mensualidades/pagos',[PagosController::class,'vistaPagos'])->name('vista.pagos')->middleware( 'auth');
@@ -100,14 +100,21 @@ Route::middleware('auth')->group(function () {
     //Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     //Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Rutas protegidas solo para TI usando middleware de Spatie Permission
-    Route::middleware(['role:TI'])->group(function () {
+    // Rutas protegidas para Administrador y TI
+    Route::middleware(['role:TI|Administrador'])->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::post('/users/{user}/role', [UserController::class, 'updateRole'])->name('users.updateRole');
+    });
 
+    // Rutas protegidas solo para TI
+    Route::middleware(['role:TI'])->group(function () {
         // Gestión de Roles y Permisos
         Route::get('/roles-permisos', [RolesPermisosController::class, 'index'])->name('roles_permisos.index');
         Route::post('/roles-permisos/{role}', [RolesPermisosController::class, 'update'])->name('roles_permisos.update');
+
+        // CRUD de Cuentas Bancarias
+        Route::resource('cuentas-bancarias', CuentadeDepositoController::class)->except(['create', 'show', 'edit']);
     });
 });
 

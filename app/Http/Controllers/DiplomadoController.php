@@ -95,9 +95,14 @@ class DiplomadoController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->has('duracion_mes')) {
+             $soloNumeros = preg_replace('/[^0-9]/', '', $request->duracion_mes);
+             $request->merge(['duracion_mes' => (int)$soloNumeros]);
+        }
+
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'duracion_mes' => 'required|string|max:100',
+            'duracion_mes' => 'required|integer|min:1',
             'costo_total' => 'required|numeric|min:0',
             'requisitos' => 'nullable|string',
             'campaña' => 'nullable|string',
@@ -112,10 +117,10 @@ class DiplomadoController extends Controller
             'requisitos' => $request->requisitos,
         ]);
 
-        if ($request->filled('campaña') && $request->filled('grupo')) {
+        if ($request->filled('campaña') || $request->filled('grupo') || $request->filled('tutor_id')) {
             GrupoCampaña::create([
-                'campaña' => $request->campaña,
-                'grupo' => $request->grupo,
+                'campaña' => $request->input('campaña') ?: '2025',
+                'grupo' => $request->input('grupo') ?: 'A',
                 'id_diplomado' => $diplomado->id,
                 'tutor_id' => $request->tutor_id,
             ]);
@@ -141,9 +146,25 @@ class DiplomadoController extends Controller
      */
     public function update(Request $request, $id)
     {
+        \Illuminate\Support\Facades\Log::info('Actualizando Diplomado:', $request->all());
+
+        if ($request->has('tutor_id') && $request->tutor_id === "") {
+             $request->merge(['tutor_id' => null]);
+        }
+
+        if ($request->has('costo_total')) {
+             $costo = str_replace([',', '$'], '', $request->costo_total);
+             $request->merge(['costo_total' => $costo]);
+        }
+
+        if ($request->has('duracion_mes')) {
+             $soloNumeros = preg_replace('/[^0-9]/', '', $request->duracion_mes);
+             $request->merge(['duracion_mes' => (int)$soloNumeros]);
+        }
+
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'duracion_mes' => 'required|string|max:100',
+            'duracion_mes' => 'required|integer|min:1',
             'costo_total' => 'required|numeric|min:0',
             'requisitos' => 'nullable|string',
             'campaña' => 'nullable|string',
@@ -159,12 +180,12 @@ class DiplomadoController extends Controller
             'requisitos' => $request->requisitos,
         ]);
 
-        if ($request->filled('campaña') && $request->filled('grupo')) {
+        if ($request->filled('campaña') || $request->filled('grupo') || $request->filled('tutor_id')) {
             GrupoCampaña::updateOrCreate(
                 ['id_diplomado' => $diplomado->id],
                 [
-                    'campaña' => $request->campaña, 
-                    'grupo' => $request->grupo,
+                    'campaña' => $request->input('campaña') ?: '2025', 
+                    'grupo' => $request->input('grupo') ?: 'A',
                     'tutor_id' => $request->tutor_id,
                 ]
             );

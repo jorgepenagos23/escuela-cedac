@@ -30,7 +30,7 @@ import { Head } from "@inertiajs/vue3";
           <div class="mt-4 md:mt-0">
               <v-dialog v-model="modalAgregar" max-width="600" persistent>
                   <template v-slot:activator="{ props: activatorProps }">
-                      <v-btn v-if="$page.props.auth.user.roles && $page.props.auth.user.roles.includes('Administrador')" v-bind="activatorProps" color="indigo-darken-3" variant="elevated" prepend-icon="mdi-plus-circle" size="large">
+                      <v-btn v-if="$page.props.auth.user.roles && ($page.props.auth.user.roles.includes('Administrador') || $page.props.auth.user.roles.includes('TI'))" v-bind="activatorProps" color="indigo-darken-3" variant="elevated" prepend-icon="mdi-plus-circle" size="large">
                           Agregar Nuevo Diplomado
                       </v-btn>
                   </template>
@@ -179,7 +179,7 @@ import { Head } from "@inertiajs/vue3";
                         <span class="text-xs font-semibold text-gray-600"><v-icon size="x-small" class="mr-1">mdi-account-tie</v-icon>{{ item.tutor_nombre || 'Sin asignar' }}</span>
                     </template>
                     <template v-slot:item.acciones="{ item }">
-                        <v-btn v-if="$page.props.auth.user.roles && $page.props.auth.user.roles.includes('Administrador')" 
+                        <v-btn v-if="$page.props.auth.user.roles && ($page.props.auth.user.roles.includes('Administrador') || $page.props.auth.user.roles.includes('TI'))" 
                                icon="mdi-pencil" size="small" color="primary" variant="text" @click="abrirEditar(item)"></v-btn>
                     </template>
                 </v-data-table>
@@ -287,7 +287,12 @@ export default {
                 this.obtenerDiplomados(); // Recargar tabla reactiva
             })
             .catch(err => {
-                swal("Error", "No se pudo guardar la información.", "error");
+                let msg = "No se pudo guardar la información.";
+                if (err.response && err.response.status === 422) {
+                    const errors = err.response.data.errors;
+                    msg = Object.values(errors).flat().join('\n');
+                }
+                swal("Error de Validación", msg, "error");
                 console.error(err);
             })
             .finally(() => {

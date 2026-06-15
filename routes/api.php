@@ -80,6 +80,7 @@ Route::get('/v1/cuentadeposito/index/2024/numero', [CuentadePagoController::clas
 Route::post('/v1/pagosabonos/crear', [PagosController::class, 'store']);
 Route::post('/v1/inscripcion/crear', [InscripcionController::class, 'store']);
 Route::get('/v1/contabilidad/reporte', [PagosController::class, 'reporteContabilidad']);
+Route::get('/v1/financiero/dashboard',  [PagosController::class, 'reporteFinancieroDashboard']);
 
 Route::get('v1/listar/alumnos/parapagos/', [InscripcionController::class, 'index2']);
 
@@ -123,6 +124,7 @@ Route::get('/v1/alumno/{alumno_id}/plan-pagos',  [PagosController::class, 'getPl
 Route::post('/v1/alumno/{alumno_id}/plan-pagos', [PagosController::class, 'reprogramarPlan']);
 // ── Buscador de Alumnos ───────────────────────────────────────────────────────
 Route::get('/v1/alumnos/buscar',              [InscripcionController::class, 'buscarAlumno']);
+Route::get('/v1/alumnos/buscar-reingreso',    [InscripcionController::class, 'buscarAlumnoReingreso']);
 Route::put('/v1/alumnos/{id}/actualizar',     [InscripcionController::class, 'actualizarAlumno']);
 // ── Descuentos vigentes (para admisiones) ─────────────────────────────────
 Route::get('/v1/descuentos/vigentes', [DescuentoController::class, 'vigentes']);

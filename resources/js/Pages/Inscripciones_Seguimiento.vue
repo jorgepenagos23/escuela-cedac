@@ -3,7 +3,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, usePage } from "@inertiajs/vue3";
 import axios from 'axios';
 import swal from 'sweetalert';
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import estadosMunicipiosData from '@/estados-municipios.json';
 
 const page     = usePage();
@@ -70,59 +70,83 @@ watch(() => form.value.estado, (newVal, oldVal) => {
     }
 });
 
-// ── Buscador de alumnos (Re-inscripciones) ────────────────────────────────────
-const searchingAlumnos = ref(false);
-const searchAlumnosQuery = ref('');
-const alumnosEncontrados = ref([]);
-const alumnoBuscado = ref(null);
-const tipoIngreso = ref('nuevo');
+// ── Buscador de alumnos (Modal de Búsqueda Explícito) ───────────────────────────
+const modalBuscarAlumno   = ref(false);
+const searchingAlumnos    = ref(false);
+const searchAlumnosQuery  = ref('');
+const alumnosEncontrados  = ref([]);
+const alumnoSeleccionado  = ref(null);   // alumno de reingreso seleccionado
+const programaSectionRef  = ref(null);   // ref al card "Programa y Académico" para scroll
 
-let debounceTimeout;
-const onSearchAlumnosChange = (val) => {
-    if (!val || val.length < 3) {
+const avatarColor = (name) => {
+    const colors = ['indigo', 'blue-darken-1', 'teal-darken-1', 'purple-darken-1', 'deep-orange', 'green-darken-1'];
+    return colors[Math.abs(((name || 'A').charCodeAt(0) - 65)) % colors.length];
+};
+
+let debounceModalTimeout;
+const buscarDesdeModal = async () => {
+    if (!searchAlumnosQuery.value || searchAlumnosQuery.value.length < 3) {
         alumnosEncontrados.value = [];
         return;
     }
-    searchAlumnosQuery.value = val;
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(async () => {
-        searchingAlumnos.value = true;
-        try {
-            const { data } = await axios.get('/api/v1/alumnos/buscar', { params: { q: searchAlumnosQuery.value } });
-            alumnosEncontrados.value = data.alumnos || [];
-        } catch (e) {
-            console.error('Error buscando alumno:', e);
-        } finally {
-            searchingAlumnos.value = false;
-        }
+    searchingAlumnos.value = true;
+    try {
+        const { data } = await axios.get('/api/v1/alumnos/buscar-reingreso', { params: { q: searchAlumnosQuery.value } });
+        alumnosEncontrados.value = data.alumnos || [];
+    } catch (e) {
+        console.error('Error buscando alumno:', e);
+    } finally {
+        searchingAlumnos.value = false;
+    }
+};
+
+const onSearchModalCambia = (val) => {
+    searchAlumnosQuery.value = val || '';
+    clearTimeout(debounceModalTimeout);
+    debounceModalTimeout = setTimeout(() => {
+        buscarDesdeModal();
     }, 400);
 };
 
-const seleccionarAlumnoExistente = (alumno) => {
-    if (!alumno) return;
-    form.value.nombre_alumno = alumno.nombre_alumno || '';
-    form.value.celular = alumno.celular || '';
-    form.value.adicional = alumno.adicional || '';
-    form.value.correo = alumno.correo || '';
-    form.value.curp = alumno.curp || '';
-    form.value.nombre_emergencia = alumno.nombre_emergencia || '';
-    form.value.parentesco_emergencia = alumno.parentesco_emergencia || '';
-    if (alumno.estado) form.value.estado = alumno.estado;
-    // Forzar actualización diferida para Municipio
-    setTimeout(() => {
-        if (alumno.municipio) form.value.municipio = alumno.municipio;
-    }, 100);
-    form.value.direccion_completa = alumno.direccion_completa || '';
+const ejecutarBusquedaInmediata = async () => {
+    // Al abrir el modal por medio de dar click en la LUPA, o al presionar Enter en el formulario base...
+    let queryStr = typeof form.value.nombre_alumno === 'object' ? form.value.nombre_alumno?.nombre_alumno : form.value.nombre_alumno;
+    
+    modalBuscarAlumno.value = true;
+    searchAlumnosQuery.value = queryStr || '';
+    
+    if (searchAlumnosQuery.value.length >= 3) {
+        buscarDesdeModal();
+    } else {
+        alumnosEncontrados.value = []; // Purgamos rastros previos
+    }
 };
 
-const cambiarTipoIngreso = (tipo) => {
-    tipoIngreso.value = tipo;
-    if (tipo === 'nuevo') {
-        const resetFields = ['nombre_alumno', 'celular', 'adicional', 'correo', 'curp', 'nombre_emergencia', 'parentesco_emergencia', 'estado', 'municipio', 'direccion_completa'];
-        resetFields.forEach(f => form.value[f] = '');
-        alumnoBuscado.value = null;
-        alumnosEncontrados.value = [];
-    }
+const onAlumnoSeleccionadoModal = (val) => {
+    if (!val) return;
+
+    form.value.nombre_alumno          = val.nombre_alumno || '';
+    form.value.celular                = val.celular || '';
+    form.value.adicional              = val.adicional || '';
+    form.value.correo                 = val.correo || '';
+    form.value.curp                   = val.curp || '';
+    form.value.nombre_emergencia      = val.nombre_emergencia || '';
+    form.value.parentesco_emergencia  = val.parentesco_emergencia || '';
+    if (val.estado) form.value.estado = val.estado;
+    setTimeout(() => {
+        if (val.municipio) form.value.municipio = val.municipio;
+    }, 100);
+    form.value.direccion_completa = val.direccion_completa || '';
+
+    alumnoSeleccionado.value  = val;
+    modalBuscarAlumno.value   = false;
+
+    // Enfocar la sección de Programa para que el usuario seleccione el nuevo diplomado
+    nextTick(() => {
+        setTimeout(() => {
+            programaSectionRef.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 250);
+    });
 };
 
 // ── Plan de pagos ─────────────────────────────────────────────────────────────
@@ -260,17 +284,15 @@ const limpiarFormulario = () => {
         metodo_pago_inscripcion:      '',
         descuento_id:                 null,
     };
-    planPagos.value      = [];
-    isSubmitted.value    = false;
-    isEditing.value      = true;
-    editandoPlan.value   = false;
-    planModificado.value = false;
-    tipoIngreso.value    = 'nuevo';
-    alumnoBuscado.value  = null;
+    planPagos.value          = [];
+    isSubmitted.value        = false;
+    isEditing.value          = true;
+    editandoPlan.value       = false;
+    planModificado.value     = false;
     alumnosEncontrados.value = [];
+    alumnoSeleccionado.value = null;
 };
 
-const habilitarEdicion = () => { isEditing.value = true; };
 
 const actualizarDiplomado = () => {
     const grupoSeleccionado = Grupos.value.find(g => g.id === form.value.seleccionGrupo);
@@ -345,9 +367,17 @@ const EnviarInscripcion = () => {
                 planPagos.value = res.data.plan_pagos;
             }
 
-            swal("¡Inscripción Guardada!", "Los datos maestros y el plan de pagos han sido generados correctamente.", "success");
-            isSubmitted.value = true;
-            isEditing.value   = false;
+            swal("¡Inscripción Guardada!", "Los datos maestros y el plan de pagos han sido generados correctamente.", "success")
+                .then(() => {
+                    limpiarFormulario();
+                    isSubmitted.value = false;
+                    isEditing.value = true;
+                    idInscripcionGenerada.value = null;
+                    planPagos.value = [];
+                    alumnoSeleccionado.value = null;
+                    costoDiplomadoRef.value = 0;
+                    setFechaActual();
+                });
         })
         .catch(err => {
             console.error(err);
@@ -369,6 +399,21 @@ const obtenerNumeroCuenta = () => {
 };
 const aseoresLista = () => {
     axios.get('/api/v1/listar/asesores').then(res => asesores.value = res.data.asesores);
+};
+
+const recargarCatalogos = () => {
+    obtenerGrupos();
+    obtenerNumeroCuenta();
+    aseoresLista();
+    cargarDescuentos();
+    // Notificación rápida
+    swal({
+        title: "Catálogos Actualizados",
+        text: "Se han sincronizado los últimos descuentos y grupos disponibles.",
+        icon: "success",
+        timer: 1500,
+        buttons: false,
+    });
 };
 
 onMounted(() => {
@@ -424,236 +469,142 @@ const iconEstadoCuota = (estado) => {
                             </h3>
                             <p class="text-indigo-200 text-sm mt-1">Llenado de datos maestros de alumno y finanzas.</p>
                         </div>
-                        <v-chip v-if="!isEditing && isSubmitted" color="success" variant="flat" prepend-icon="mdi-lock">
-                            Expediente Bloqueado
-                        </v-chip>
-                        <v-chip v-else color="warning" variant="flat" prepend-icon="mdi-pencil">
-                            En Edición
-                        </v-chip>
+                        <div class="flex items-center gap-4">
+                            <v-btn icon="mdi-sync" size="small" variant="text" color="white" title="Sincronizar Catálogos (Descuentos, Grupos, Asesores)" @click="recargarCatalogos"></v-btn>
+                            <v-chip v-if="!isEditing && isSubmitted" color="success" variant="flat" prepend-icon="mdi-lock">
+                                Expediente Bloqueado
+                            </v-chip>
+                            <v-chip v-else color="warning" variant="flat" prepend-icon="mdi-pencil">
+                                En Edición
+                            </v-chip>
+                        </div>
                     </div>
 
-                    <form @submit.prevent="EnviarInscripcion" class="p-6 bg-gray-50">
-                        <!-- SECCIÓN DE TIPO DE INGRESO (Buscador) -->
-                        <div v-if="isEditing" class="mb-6 p-4 rounded-lg border-2 border-indigo-100 bg-indigo-50/50">
-                            <div class="flex flex-col sm:flex-row items-center gap-4">
-                                <span class="text-sm font-bold text-indigo-900 uppercase tracking-wide mr-2">Tipo de Ingreso:</span>
-                                <v-btn-toggle v-model="tipoIngreso" color="indigo-darken-3" variant="outlined" divided mandatory @update:modelValue="cambiarTipoIngreso">
-                                    <v-btn value="nuevo" prepend-icon="mdi-account-plus">Alumno Nuevo</v-btn>
-                                    <v-btn value="existente" prepend-icon="mdi-account-search">Alumno Existente</v-btn>
-                                </v-btn-toggle>
+                    <form @submit.prevent="EnviarInscripcion" class="p-4 bg-slate-50 flex flex-col gap-4">
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            
+                            <!-- 1. Datos Maestros (Ultra Compacto) -->
+                            <v-card variant="outlined" class="bg-white border-gray-200">
+                                <v-card-title class="text-sm font-semibold text-gray-700 bg-gray-100 py-1.5 px-3 border-b flex items-center">
+                                    <v-icon size="x-small" class="mr-2 text-indigo-500">mdi-card-account-details</v-icon> Perfil del Estudiante
+                                </v-card-title>
+                                <v-card-text class="pt-3 px-3 pb-2">
+                                    <!-- Campo Clásico + Lupa (Búsqueda Explícita) -->
+                                    <v-text-field
+                                        v-if="isEditing"
+                                        v-model="form.nombre_alumno"
+                                        label="Nombre del Alumno (Pulsa enter o lupa si existe)"
+                                        variant="outlined"
+                                        density="compact"
+                                        append-inner-icon="mdi-magnify"
+                                        @click:append-inner="ejecutarBusquedaInmediata"
+                                        @keydown.enter.prevent="ejecutarBusquedaInmediata"
+                                        class="mb-2"
+                                        required
+                                    ></v-text-field>
+                                    <v-text-field v-else v-model="form.nombre_alumno" label="Nombre del Alumno" variant="outlined" density="compact" readonly class="mb-2" />
+
+                                    <!-- Banner reingreso: aparece al seleccionar un alumno existente -->
+                                    <div v-if="alumnoSeleccionado" class="mb-3 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 flex items-start gap-2">
+                                        <v-icon color="blue-darken-2" size="20" class="mt-0.5 shrink-0">mdi-account-reactivate</v-icon>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="text-xs font-bold text-blue-800 leading-tight">Alumno de Reingreso</div>
+                                            <div class="text-xs text-blue-700 mt-0.5">
+                                                <span v-if="Number(alumnoSeleccionado.total_inscripciones) > 1">
+                                                    {{ alumnoSeleccionado.total_inscripciones }} programa(s) previo(s)
+                                                </span>
+                                                <span v-else>Primera re-inscripción</span>
+                                                <span v-if="alumnoSeleccionado.ultimo_diplomado" class="ml-1">
+                                                    · Último: <strong>{{ alumnoSeleccionado.ultimo_diplomado }}</strong>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <v-btn v-if="isEditing" icon="mdi-close" size="x-small" variant="text" color="blue" class="shrink-0" @click="alumnoSeleccionado = null"></v-btn>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-2 mb-2">
+                                        <v-text-field v-model="form.celular" label="Num. Celular" variant="outlined" density="compact" hide-details :readonly="!isEditing" />
+                                        <v-text-field v-model="form.adicional" label="Cel. Adicional" variant="outlined" density="compact" hide-details :readonly="!isEditing" />
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 mb-2">
+                                        <v-text-field v-model="form.correo" label="Correo Electrónico" variant="outlined" density="compact" hide-details :readonly="!isEditing" />
+                                        <v-text-field v-model="form.curp" label="CURP" variant="outlined" density="compact" hide-details :readonly="!isEditing" />
+                                    </div>
+                                    
+                                    <!-- Sub-bloque Domicilio dentro del mismo panel -->
+                                    <v-divider class="my-2"></v-divider>
+                                    <div class="text-[0.65rem] font-bold text-gray-400 uppercase tracking-wide mb-1">Domicilio y Emergencia</div>
+                                    <div class="grid grid-cols-2 gap-2 mb-2">
+                                        <v-autocomplete v-model="form.estado" :items="estados" label="Estado" variant="outlined" density="compact" hide-details :readonly="!isEditing" />
+                                        <v-autocomplete v-model="form.municipio" :items="municipiosDelEstado" label="Municipio" variant="outlined" density="compact" hide-details :readonly="!isEditing" :disabled="!form.estado" />
+                                    </div>
+                                    <v-text-field v-model="form.direccion_completa" label="Dirección Completa" variant="outlined" density="compact" hide-details class="mb-2" :readonly="!isEditing" />
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <v-text-field v-model="form.nombre_emergencia" label="Nombre Emergencia" variant="outlined" density="compact" hide-details :readonly="!isEditing" />
+                                        <v-text-field v-model="form.parentesco_emergencia" label="Parentesco" variant="outlined" density="compact" hide-details :readonly="!isEditing" />
+                                    </div>
+                                    <v-text-field :value="authUser.name" label="Matriculador (Auto)" variant="plain" density="compact" class="mt-2 text-xs opacity-70" readonly hide-details />
+                                </v-card-text>
+                            </v-card>
+
+                            <!-- 2. Matrícula y Finanzas -->
+                            <div class="flex flex-col gap-4">
+                                <v-card ref="programaSectionRef" variant="outlined"
+                                    :class="['bg-white transition-all duration-300', alumnoSeleccionado && isEditing ? 'border-blue-400' : 'border-gray-200']">
+                                    <v-card-title class="text-sm font-semibold text-gray-700 bg-gray-100 py-1.5 px-3 border-b flex items-center">
+                                        <v-icon size="x-small" class="mr-2 text-blue-500">mdi-school-outline</v-icon> Programa y Académico
+                                        <v-chip v-if="alumnoSeleccionado && isEditing" color="blue" size="x-small" variant="flat" class="ml-auto" prepend-icon="mdi-cursor-pointer">Selecciona el nuevo programa</v-chip>
+                                    </v-card-title>
+                                    <v-card-text class="pt-3 px-3 pb-2">
+                                        <v-select v-model="form.seleccionGrupo" :items="Grupos" item-title="nombre" item-value="id" label="Programa a Inscribir" variant="outlined" density="compact" hide-details :readonly="!isEditing" @update:modelValue="actualizarDiplomado" class="mb-2">
+                                            <template v-slot:item="{ props, item }">
+                                                <v-list-item v-bind="props" :title="item.raw.nombre" :subtitle="`Gpo: ${item.raw.grupo} | $${Number(item.raw.costo_total).toLocaleString()}`" />
+                                            </template>
+                                            <template v-slot:selection="{ item }"><span>{{ item.raw.nombre }} (Gpo: {{ item.raw.grupo }})</span></template>
+                                        </v-select>
+                                        
+                                        <div v-if="costoDiplomadoRef > 0 && isEditing" class="mb-2 bg-blue-50 text-blue-800 text-xs py-1 px-2 rounded font-semibold text-right">
+                                            Costo Base: ${{ Number(costoDiplomadoRef).toLocaleString() }} MXN
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-2 hover-descuento">
+                                            <v-select v-model="form.selectedTutor" :items="asesores" item-title="name" item-value="id" label="Tutor Asignado" variant="outlined" density="compact" hide-details :readonly="!isEditing" />
+                                            <v-select v-if="isEditing" v-model="form.descuento_id" :items="descuentosVigentes" item-title="nombre" item-value="id" label="Beca / Descuento" variant="outlined" density="compact" hide-details clearable prepend-inner-icon="mdi-tag" color="deep-purple-darken-2" />
+                                        </div>
+                                    </v-card-text>
+                                </v-card>
+
+                                <v-card variant="outlined" class="bg-white border-gray-200 flex-1">
+                                    <v-card-title class="text-sm font-semibold text-gray-700 bg-gray-100 py-1.5 px-3 border-b flex items-center">
+                                        <v-icon size="x-small" class="mr-2 text-green-600">mdi-cash-register</v-icon> Cobro Inicial (Finanzas)
+                                    </v-card-title>
+                                    <v-card-text class="pt-3 px-3 pb-2">
+                                        <div class="grid grid-cols-2 gap-2 mb-2">
+                                            <v-select v-model="form.selectedTitular" :items="cuentaDeposito" item-title="titular" item-value="id" label="Cuenta Receptora" variant="outlined" density="compact" hide-details :readonly="!isEditing">
+                                                <template v-slot:item="{ props, item }"><v-list-item v-bind="props" :title="item.raw.banco" :subtitle="item.raw.titular" /></template>
+                                            </v-select>
+                                            <v-select v-model="form.metodo_pago_inscripcion" :items="metodosPago" label="Método de Pago" variant="outlined" density="compact" hide-details :readonly="!isEditing" />
+                                        </div>
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <v-text-field v-model="form.monto_inscripcion" label="Abono Ingreso" variant="outlined" density="compact" hide-details prefix="$" type="number" :readonly="!isEditing" />
+                                            <v-text-field v-model="form.fecha_inscripcion" label="Alta" variant="filled" density="compact" hide-details type="date" readonly />
+                                            <v-text-field v-model="form.fecha_primer_pago_colegiatura" label="Siguiente Pago" variant="outlined" density="compact" hide-details type="date" :readonly="!isEditing" />
+                                        </div>
+                                    </v-card-text>
+                                </v-card>
                             </div>
 
-                            <v-expand-transition>
-                                <div v-if="tipoIngreso === 'existente'" class="mt-4 pt-4 border-t border-indigo-100">
-                                    <v-autocomplete
-                                        v-model="alumnoBuscado"
-                                        :items="alumnosEncontrados"
-                                        item-title="nombre_alumno"
-                                        item-value="id"
-                                        label="Buscar por Nombre, Matrícula o CURP..."
-                                        variant="solo-filled"
-                                        density="comfortable"
-                                        prepend-inner-icon="mdi-magnify"
-                                        hide-no-data
-                                        hide-details
-                                        return-object
-                                        @update:search="onSearchAlumnosChange"
-                                        :loading="searchingAlumnos"
-                                        @update:modelValue="seleccionarAlumnoExistente"
-                                        placeholder="Ingresa al menos 3 caracteres para buscar"
-                                    >
-                                        <template v-slot:item="{ props, item }">
-                                            <v-list-item v-bind="props" :title="item.raw.nombre_alumno || '—'" :subtitle="`CURP: ${item.raw.curp || 'N/A'} | Tel: ${item.raw.celular || '—'}`">
-                                                <template v-slot:prepend>
-                                                    <v-avatar color="indigo-lighten-4" size="36">
-                                                        <v-icon color="indigo">mdi-account</v-icon>
-                                                    </v-avatar>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-autocomplete>
-                                </div>
-                            </v-expand-transition>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                            <!-- Sección 1: Datos Generales -->
-                            <v-card variant="outlined" class="bg-white border-gray-200">
-                                <v-card-title class="text-base font-semibold text-gray-700 bg-gray-100/50 py-3 border-b flex items-center">
-                                    <v-icon size="small" class="mr-2">mdi-card-account-details-outline</v-icon> Datos Generales
-                                </v-card-title>
-                                <v-card-text class="pt-4">
-                                    <v-text-field v-model="form.nombre_alumno" label="Nombre del Alumno" variant="outlined" density="comfortable" :readonly="!isEditing" required />
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <v-text-field v-model="form.celular" label="Num. Celular" variant="outlined" density="comfortable" :readonly="!isEditing" />
-                                        <v-text-field v-model="form.adicional" label="Contacto Adicional" variant="outlined" density="comfortable" :readonly="!isEditing" />
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                        <v-text-field v-model="form.correo" label="Correo Electrónico" variant="outlined" density="comfortable" :readonly="!isEditing" />
-                                        <v-text-field v-model="form.curp" label="CURP" variant="outlined" density="comfortable" :readonly="!isEditing" />
-                                    </div>
-                                    <v-text-field :value="authUser.name" label="Usuario Matriculador (Responsable)" variant="filled" density="comfortable" readonly append-inner-icon="mdi-shield-check" />
-                                </v-card-text>
-                            </v-card>
-
-                            <!-- Sección 1.5: Domicilio y Emergencia -->
-                            <v-card variant="outlined" class="md:col-span-2 bg-white border-gray-200">
-                                <v-card-title class="text-base font-semibold text-gray-700 bg-gray-100/50 py-3 border-b flex items-center">
-                                    <v-icon size="small" class="mr-2">mdi-map-marker-radius</v-icon> Datos Domiciliarios y Emergencia
-                                </v-card-title>
-                                <v-card-text class="pt-4">
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                        <v-autocomplete v-model="form.estado" :items="estados" label="Estado / Provincia" variant="outlined" density="comfortable" :readonly="!isEditing" />
-                                        <v-autocomplete v-model="form.municipio" :items="municipiosDelEstado" label="Ciudad / Municipio" variant="outlined" density="comfortable" :readonly="!isEditing" :disabled="!form.estado" />
-                                        <v-text-field v-model="form.direccion_completa" label="Dirección Completa (Calle, Col, CP)" variant="outlined" density="comfortable" :readonly="!isEditing" />
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <v-text-field v-model="form.nombre_emergencia" label="Contacto de Emergencia" variant="outlined" density="comfortable" :readonly="!isEditing" />
-                                        <v-text-field v-model="form.parentesco_emergencia" label="Parentesco (Madre, Esposo, etc)" variant="outlined" density="comfortable" :readonly="!isEditing" />
-                                    </div>
-                                </v-card-text>
-                            </v-card>
-
-                            <!-- Sección 2: Matrícula Académica -->
-                            <v-card variant="outlined" class="bg-white border-gray-200">
-                                <v-card-title class="text-base font-semibold text-gray-700 bg-gray-100/50 py-3 border-b flex items-center">
-                                    <v-icon size="small" class="mr-2">mdi-school-outline</v-icon> Matrícula Académica
-                                </v-card-title>
-                                <v-card-text class="pt-4">
-                                    <div class="relative">
-                                        <v-select
-                                            v-model="form.seleccionGrupo"
-                                            :items="Grupos"
-                                            item-title="nombre"
-                                            item-value="id"
-                                            label="Programa y Grupo"
-                                            variant="outlined"
-                                            density="comfortable"
-                                            :readonly="!isEditing"
-                                            @update:modelValue="actualizarDiplomado"
-                                        >
-                                            <template v-slot:item="{ props, item }">
-                                                <v-list-item v-bind="props"
-                                                    :title="`Diplomado: ${item.raw.nombre}`"
-                                                    :subtitle="`Grupo: ${item.raw.grupo} | Costo: $${Number(item.raw.costo_total).toLocaleString()} | ${item.raw.duracion_mes ?? 5} meses`"
-                                                />
-                                            </template>
-                                            <template v-slot:selection="{ item }">
-                                                <span>{{ item.raw.nombre }} (Gpo: {{ item.raw.grupo }})</span>
-                                            </template>
-                                        </v-select>
-
-                                        <div v-if="costoDiplomadoRef > 0 && isEditing" class="text-indigo-800 bg-indigo-50 border border-indigo-200 rounded p-2 text-sm mt-[-10px] mb-4 flex items-center justify-between">
-                                            <span><strong><v-icon size="small" color="indigo" class="mr-1">mdi-tag-outline</v-icon> Costo Oficial del Programa:</strong></span>
-                                            <span class="font-black text-lg">${{ Number(costoDiplomadoRef).toLocaleString() }} MXN</span>
-                                        </div>
-                                    </div>
-                                    <v-select
-                                        v-model="form.selectedTutor"
-                                        :items="asesores"
-                                        item-title="name"
-                                        item-value="id"
-                                        label="Tutor Asignado"
-                                        variant="outlined"
-                                        density="comfortable"
-                                        :readonly="!isEditing"
-                                    />
-
-                                    <v-select
-                                        v-if="descuentosVigentes.length > 0 && isEditing"
-                                        v-model="form.descuento_id"
-                                        :items="descuentosVigentes"
-                                        item-title="nombre"
-                                        item-value="id"
-                                        label="Aplicar Descuento de Temporada"
-                                        variant="outlined"
-                                        density="comfortable"
-                                        clearable
-                                        prepend-inner-icon="mdi-tag-heart"
-                                        color="deep-purple-darken-2"
-                                        hint="El descuento se aplicará sobre el costo total del programa"
-                                        persistent-hint
-                                    >
-                                        <template v-slot:item="{ props, item }">
-                                            <v-list-item v-bind="props" :title="item.raw.nombre" :subtitle="`Valor: ${item.raw.etiqueta} | Aplica: ${item.raw.aplica_a}`" />
-                                        </template>
-                                    </v-select>
-                                </v-card-text>
-                            </v-card>
-
-                            <!-- Sección 3: Disposiciones Financieras -->
-                            <v-card variant="outlined" class="md:col-span-2 bg-white border-gray-200">
-                                <v-card-title class="text-base font-semibold text-gray-700 bg-gray-100/50 py-3 border-b flex items-center">
-                                    <v-icon size="small" class="mr-2">mdi-cash-multiple</v-icon> Disposiciones Financieras
-                                </v-card-title>
-                                <v-card-text class="pt-4">
-                                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                                        <v-select
-                                            v-model="form.selectedTitular"
-                                            :items="cuentaDeposito"
-                                            item-title="titular"
-                                            item-value="id"
-                                            label="Cuenta Receptora"
-                                            variant="outlined"
-                                            density="comfortable"
-                                            :readonly="!isEditing"
-                                        >
-                                            <template v-slot:item="{ props, item }">
-                                                <v-list-item v-bind="props" :title="item.raw.banco" :subtitle="`${item.raw.titular} | C: ${item.raw.CLABE}`" />
-                                            </template>
-                                        </v-select>
-
-                                        <v-select
-                                            v-model="form.metodo_pago_inscripcion"
-                                            :items="metodosPago"
-                                            label="Método de Pago"
-                                            variant="outlined"
-                                            density="comfortable"
-                                            :readonly="!isEditing"
-                                        />
-
-                                        <v-text-field
-                                            v-model="form.monto_inscripcion"
-                                            label="Monto Inscripción"
-                                            variant="outlined"
-                                            density="comfortable"
-                                            prefix="$"
-                                            type="number"
-                                            :readonly="!isEditing"
-                                        />
-
-                                        <v-text-field
-                                            v-model="form.fecha_inscripcion"
-                                            label="Fecha Alta"
-                                            variant="filled"
-                                            density="comfortable"
-                                            type="date"
-                                            readonly
-                                        />
-
-                                        <v-text-field
-                                            v-model="form.fecha_primer_pago_colegiatura"
-                                            label="1er Pago Colegiatura"
-                                            variant="outlined"
-                                            density="comfortable"
-                                            type="date"
-                                            :readonly="!isEditing"
-                                        />
-                                    </div>
-                                </v-card-text>
-                            </v-card>
                         </div>
 
                         <!-- Barra de Botones del Formulario -->
-                        <div class="mt-8 flex justify-between items-center bg-gray-200/50 p-4 rounded-lg">
+                        <div class="mt-2 flex justify-between items-center bg-gray-200/50 p-2 px-4 rounded shadow-inner border border-gray-300/50">
                             <div>
-                                <v-btn v-if="!isEditing" @click="limpiarFormulario" color="indigo-darken-3" variant="text" prepend-icon="mdi-plus">Registrar Otra Matrícula</v-btn>
+                                <v-btn v-if="!isEditing" @click="limpiarFormulario" color="indigo-darken-3" variant="text" size="small" prepend-icon="mdi-plus">Registrar Otra Matrícula</v-btn>
                             </div>
-                            <div class="space-x-4">
-                                <v-btn v-if="isEditing" @click="limpiarFormulario" variant="tonal" color="grey-darken-2">Limpiar Datos</v-btn>
-                                <v-btn v-if="!isEditing && authUser.roles?.includes('TI')" @click="habilitarEdicion" color="warning" variant="elevated" prepend-icon="mdi-pencil-lock-open">Desbloquear Edición (TI)</v-btn>
-                                <v-btn v-if="isEditing" type="submit" color="indigo-darken-3" variant="elevated" prepend-icon="mdi-content-save-check">Guardar Inscripción Estricta</v-btn>
+                            <div class="space-x-3">
+                                <v-btn v-if="isEditing" @click="limpiarFormulario" variant="tonal" size="small" color="grey-darken-2">Limpiar</v-btn>
+<v-btn v-if="isEditing" type="submit" color="indigo-darken-3" size="small" variant="elevated" prepend-icon="mdi-check-all">Procesar Ingreso</v-btn>
                             </div>
                         </div>
                     </form>
@@ -935,6 +886,95 @@ const iconEstadoCuota = (estado) => {
             <v-icon class="mr-2">{{ snackColor === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle' }}</v-icon>
             {{ snackMsg }}
         </v-snackbar>
+        
+        <!-- ── Modal Explicito de Búsqueda de Alumno ── -->
+        <v-dialog v-model="modalBuscarAlumno" max-width="700">
+            <v-card rounded="lg">
+                <v-card-title class="bg-indigo-900 text-white flex justify-between items-center py-3">
+                    <span class="text-base font-semibold"><v-icon class="mr-2">mdi-account-search</v-icon> Búsqueda de Alumno Existente</span>
+                    <v-btn icon="mdi-close" variant="text" size="small" color="white" @click="modalBuscarAlumno = false"></v-btn>
+                </v-card-title>
+                
+                <div class="px-6 pt-4 pb-0 bg-gray-50 border-b border-gray-200">
+                    <v-text-field
+                        :model-value="searchAlumnosQuery"
+                        @update:model-value="onSearchModalCambia"
+                        label="Escribe para filtrar o buscar otro alumno..."
+                        variant="outlined"
+                        density="comfortable"
+                        prepend-inner-icon="mdi-magnify"
+                        clearable
+                        autofocus
+                        hide-details
+                        class="mb-4 bg-white"
+                        placeholder="Ej. Juan Perez"
+                    ></v-text-field>
+                </div>
+
+                <v-card-text class="py-4 bg-gray-50 mb-0" style="min-height: 250px; max-height: 400px; overflow-y: auto;">
+                    <div v-if="searchingAlumnos" class="py-8 flex flex-col items-center justify-center">
+                        <v-progress-circular indeterminate color="indigo" size="48"></v-progress-circular>
+                        <p class="mt-4 text-gray-600 font-medium tracking-wide animate-pulse">Buscando en la base de datos...</p>
+                    </div>
+                    
+                    <div v-else-if="alumnosEncontrados.length === 0 && searchAlumnosQuery?.length >= 3" class="py-8 text-center bg-white rounded border border-dashed border-gray-300">
+                        <v-icon size="48" color="grey-lighten-1">mdi-account-question</v-icon>
+                        <p class="mt-3 text-gray-700 font-medium text-lg">No hay resultados para "{{ searchAlumnosQuery }}"</p>
+                        <p class="text-sm text-gray-500 mt-1 mb-4">Si el nombre es nuevo, cierra esta ventana para declararlo como de Nuevo Ingreso al guardar.</p>
+                        <v-btn color="indigo" variant="tonal" @click="modalBuscarAlumno = false">Continuar como Nuevo Ingreso</v-btn>
+                    </div>
+                    
+                    <div v-else-if="alumnosEncontrados.length === 0 && searchAlumnosQuery?.length < 3" class="py-8 text-center bg-transparent">
+                        <v-icon size="48" color="grey-lighten-3">mdi-text-search</v-icon>
+                        <p class="mt-3 text-gray-500 font-medium text-base">Escribe al menos 3 letras para comenzar la búsqueda automáticamente.</p>
+                    </div>
+                    
+                    <div v-else>
+                        <p class="text-xs text-gray-500 mb-3 bg-blue-50 border border-blue-100 px-3 py-2 rounded flex items-center gap-2">
+                            <v-icon size="x-small" color="blue">mdi-information-outline</v-icon>
+                            {{ alumnosEncontrados.length }} alumno(s) encontrado(s). Haz clic para auto-llenar el perfil y continuar al programa.
+                        </p>
+                        <v-list class="border rounded shadow-sm bg-white" lines="two">
+                            <v-list-item
+                                v-for="(item) in alumnosEncontrados" :key="item.id"
+                                @click="onAlumnoSeleccionadoModal(item)"
+                                class="hover:bg-indigo-50 border-b last:border-b-0 cursor-pointer transition-colors"
+                            >
+                                <template v-slot:prepend>
+                                    <v-avatar :color="avatarColor(item.nombre_alumno)" size="42" class="mr-3">
+                                        <span class="text-white text-sm font-bold">
+                                            {{ (item.nombre_alumno || '?').split(' ').filter(w => w).slice(0, 2).map(w => w[0]).join('').toUpperCase() }}
+                                        </span>
+                                    </v-avatar>
+                                </template>
+                                <v-list-item-title class="font-bold text-gray-800 text-sm">{{ item.nombre_alumno }}</v-list-item-title>
+                                <v-list-item-subtitle class="text-xs text-gray-500 mt-0.5">
+                                    <span class="mr-3">{{ item.celular || '—' }}</span>
+                                    <span class="mr-3 font-mono">{{ item.curp || '—' }}</span>
+                                    <span v-if="item.ultimo_diplomado" class="text-indigo-600 font-medium">Último: {{ item.ultimo_diplomado }}</span>
+                                </v-list-item-subtitle>
+                                <template v-slot:append>
+                                    <div class="flex flex-col items-end gap-1">
+                                        <v-chip
+                                            :color="Number(item.total_inscripciones) > 1 ? 'blue' : 'green'"
+                                            size="x-small" variant="flat"
+                                            :prepend-icon="Number(item.total_inscripciones) > 1 ? 'mdi-account-reactivate' : 'mdi-account-plus'"
+                                        >
+                                            {{ Number(item.total_inscripciones) > 1 ? `${item.total_inscripciones} inscripciones` : 'Nuevo ingreso' }}
+                                        </v-chip>
+                                        <v-btn color="indigo" size="x-small" variant="text" append-icon="mdi-arrow-right">Seleccionar</v-btn>
+                                    </div>
+                                </template>
+                            </v-list-item>
+                        </v-list>
+                    </div>
+                </v-card-text>
+                <v-card-actions class="bg-gray-100 py-2 px-4 shadow-inner">
+                    <v-spacer></v-spacer>
+                    <v-btn color="grey-darken-2" variant="text" @click="modalBuscarAlumno = false">Es Alumno Nuevo (Cerrar)</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
     </AuthenticatedLayout>
 </template>

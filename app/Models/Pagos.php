@@ -44,6 +44,40 @@ class Pagos extends Model
             // restar el monto del abono al monto_total
             if ($inscripcion && $inscripcion->saldo > 0) {
                 $inscripcion->saldo -= $pago->pago_colegiatura;
+                
+                // Distribuir el total pagado (histórico + nuevo abono) en el plan de pagos
+                if ($inscripcion->plan_pagos) {
+                    $plan = is_string($inscripcion->plan_pagos) ? json_decode($inscripcion->plan_pagos, true) : $inscripcion->plan_pagos;
+                    if (is_array($plan)) {
+                        // Calcular total pagado activo incluyendo el nuevo abono (que aún no está en BD)
+                        $totalPagadoActivo = Pagos::where('alumno_id', $inscripcion->id)
+                                                  ->where('status', 'Activo')
+                                                  ->sum('pago_colegiatura') + $pago->pago_colegiatura;
+
+                        $montoAbono = (float) $totalPagadoActivo;
+                        
+                        foreach ($plan as &$cuota) {
+                            $cuota['abonado'] = 0;
+                            $cuota['estado'] = 'pendiente';
+
+                            if ($montoAbono > 0) {
+                                $montoCuota = (float) ($cuota['monto'] ?? 0);
+                                if ($montoAbono >= $montoCuota) {
+                                    $cuota['abonado'] = $montoCuota;
+                                    $cuota['estado'] = 'pagado';
+                                    $montoAbono -= $montoCuota;
+                                } else {
+                                    $cuota['abonado'] = $montoAbono;
+                                    $cuota['estado'] = 'parcial';
+                                    $montoAbono = 0;
+                                }
+                            }
+                        }
+
+                        $inscripcion->plan_pagos = json_encode($plan);
+                    }
+                }
+
                 $inscripcion->save();
             }
             

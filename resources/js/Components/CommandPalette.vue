@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import { useErpWindows } from '@/Composables/useErpWindows';
 
 // ─── Props / emits ────────────────────────────────────────────────────────────
 const props  = defineProps({ modelValue: Boolean });
@@ -8,6 +9,7 @@ const emit   = defineEmits(['update:modelValue']);
 
 const page     = usePage();
 const authUser = computed(() => page.props.auth?.user);
+const erp      = useErpWindows();
 
 // ─── Catálogo de módulos (objetos) ────────────────────────────────────────────
 const todosLosModulos = computed(() => {
@@ -210,7 +212,7 @@ const onPaletaKeydown = (e) => {
         scrollToSelected();
     } else if (e.key === 'Enter') {
         if (resultados.value[selected.value]) {
-            navegarA(resultados.value[selected.value].url);
+            navegarA(resultados.value[selected.value]);
         }
     } else if (e.key === 'Escape') {
         abierto.value = false;
@@ -226,9 +228,13 @@ const scrollToSelected = () => {
 };
 
 // ─── Navegación ───────────────────────────────────────────────────────────────
-const navegarA = (url) => {
+const navegarA = (modulo) => {
     abierto.value = false;
-    window.location.href = url;
+    if (modulo.url === '/logout') {
+    	window.location.href = modulo.url;
+    } else {
+    	erp.openErpWindow({ url: modulo.url, name: modulo.titulo, icon: modulo.icono });
+    }
 };
 
 // ─── Helpers visuales ─────────────────────────────────────────────────────────
@@ -306,7 +312,7 @@ const getLighter = (color) => getBg(color) + '18';  // ~10% opacity hex
                                 class="cp-item"
                                 :class="{ 'item--selected': idx === selected }"
                                 @mouseenter="selected = idx"
-                                @click="navegarA(modulo.url)"
+                                @click="navegarA(modulo)"
                             >
                                 <!-- Ícono del módulo -->
                                 <div

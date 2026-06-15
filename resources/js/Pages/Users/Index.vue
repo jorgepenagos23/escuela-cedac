@@ -12,6 +12,15 @@ const form = useForm({
     role: '',
 });
 
+const createDialog = ref(false);
+const createForm = useForm({
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+    role: '',
+});
+
 const editDialog = ref(false);
 const selectedUser = ref(null);
 
@@ -30,6 +39,21 @@ const submitRoleUpdate = () => {
     });
 };
 
+const openCreateModal = () => {
+    createForm.reset();
+    createForm.clearErrors();
+    createDialog.value = true;
+};
+
+const submitCreateUser = () => {
+    createForm.post(route('users.store'), {
+        onSuccess: () => {
+            createDialog.value = false;
+            createForm.reset();
+        },
+    });
+};
+
 </script>
 
 <template>
@@ -44,9 +68,20 @@ const submitRoleUpdate = () => {
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 
                 <v-card elevation="0" rounded="xl" class="border border-gray-100 pa-6">
-                    <v-card-title class="text-h6 font-weight-bold tracking-tight text-gray-800 mb-4">
-                        Directorio de Usuarios del Sistema
-                    </v-card-title>
+                    <div class="flex justify-between items-center mb-4">
+                        <v-card-title class="text-h6 font-weight-bold tracking-tight text-gray-800 pa-0">
+                            Directorio de Usuarios del Sistema
+                        </v-card-title>
+                        
+                        <v-btn
+                            prepend-icon="mdi-account-plus"
+                            color="indigo-darken-2"
+                            variant="flat"
+                            @click="openCreateModal"
+                        >
+                            Nuevo Usuario
+                        </v-btn>
+                    </div>
                     
                     <v-table>
                         <thead>
@@ -109,7 +144,7 @@ const submitRoleUpdate = () => {
                     ></v-select>
                 </v-card-text>
 
-                <v-card-actions class="justify-end">
+                <v-card-actions class="justify-end bg-gray-50 pa-3">
                     <v-btn
                         variant="text"
                         color="grey-darken-1"
@@ -124,6 +159,96 @@ const submitRoleUpdate = () => {
                         :loading="form.processing"
                     >
                         Guardar Cambios
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Dialogo (Modal) para Crear Nuevo Usuario -->
+        <v-dialog v-model="createDialog" max-width="500" persistent>
+            <v-card rounded="xl" class="overflow-hidden">
+                <v-card-title class="bg-indigo-900 text-white py-3 px-4 flex justify-between items-center">
+                    <span class="text-base font-semibold"><v-icon class="mr-2">mdi-account-plus</v-icon> Alta de Usuario</span>
+                    <v-btn icon="mdi-close" variant="text" size="small" color="white" @click="createDialog = false" :disabled="createForm.processing"></v-btn>
+                </v-card-title>
+
+                <v-card-text class="pa-5 pt-6 bg-gray-50">
+                    <div class="space-y-4">
+                        <v-text-field
+                            v-model="createForm.name"
+                            label="Nombre Completo"
+                            variant="outlined"
+                            density="comfortable"
+                            prepend-inner-icon="mdi-account"
+                            :error-messages="createForm.errors.name"
+                            required
+                        ></v-text-field>
+
+                        <v-text-field
+                            v-model="createForm.email"
+                            label="Correo Electrónico"
+                            type="email"
+                            variant="outlined"
+                            density="comfortable"
+                            prepend-inner-icon="mdi-email"
+                            :error-messages="createForm.errors.email"
+                            required
+                        ></v-text-field>
+
+                        <v-text-field
+                            v-model="createForm.password"
+                            label="Contraseña"
+                            type="password"
+                            variant="outlined"
+                            density="comfortable"
+                            prepend-inner-icon="mdi-lock"
+                            :error-messages="createForm.errors.password"
+                            required
+                        ></v-text-field>
+
+                        <v-text-field
+                            v-model="createForm.password_confirmation"
+                            label="Confirmar Contraseña"
+                            type="password"
+                            variant="outlined"
+                            density="comfortable"
+                            prepend-inner-icon="mdi-lock-check"
+                            :error-messages="createForm.errors.password_confirmation"
+                            required
+                        ></v-text-field>
+
+                        <v-select
+                            v-model="createForm.role"
+                            :items="roles"
+                            item-title="name"
+                            item-value="name"
+                            label="Asignar Rol"
+                            variant="outlined"
+                            density="comfortable"
+                            prepend-inner-icon="mdi-shield-account"
+                            :error-messages="createForm.errors.role"
+                            required
+                        ></v-select>
+                    </div>
+                </v-card-text>
+
+                <v-card-actions class="bg-gray-200 py-3 px-4 shadow-inner flex justify-end gap-2">
+                    <v-btn 
+                        variant="text" 
+                        color="grey-darken-3" 
+                        @click="createDialog = false"
+                        :disabled="createForm.processing"
+                    >
+                        Cancelar
+                    </v-btn>
+                    <v-btn 
+                        variant="flat" 
+                        color="indigo-darken-2" 
+                        @click="submitCreateUser"
+                        :loading="createForm.processing"
+                        prepend-icon="mdi-check"
+                    >
+                        Generar Acceso
                     </v-btn>
                 </v-card-actions>
             </v-card>

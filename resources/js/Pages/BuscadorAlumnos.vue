@@ -1,8 +1,15 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, usePage } from "@inertiajs/vue3";
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
+import { useErpWindows } from '@/Composables/useErpWindows';
+import SeccionCard from '@/Components/SeccionCard.vue';
+import CampoField from '@/Components/CampoField.vue';
+
+const erp = useErpWindows();
+const mounted = ref(false);
 
 const page     = usePage();
 const authUser = page.props.auth.user;
@@ -13,12 +20,18 @@ const puedeProgramarPlan = computed(() =>
     authUser?.permissions?.includes('editar_pagos_manual')
 );
 
+const puedeEditarDatosMaestros = computed(() =>
+    !authUser?.roles?.includes('Admisiones')
+);
+
 // ── Estado principal ──────────────────────────────────────────────────────────
 const busqueda        = ref('');
 const alumnos         = ref([]);
 const cargando        = ref(false);
 const alumnoActivo    = ref(null);   // alumno seleccionado actualmente
 const tabActiva       = ref('datos'); // 'datos' | 'plan'
+const paginaActual    = ref(1);
+const totalPaginas    = ref(1);
 
 // ── Edición de datos ──────────────────────────────────────────────────────────
 const editando        = ref(false);
@@ -42,21 +55,68 @@ const mostrarSnack = (msg, color = 'success') => {
 let debounceTimer = null;
 watch(busqueda, (val) => {
     clearTimeout(debounceTimer);
-    if (!val.trim()) { alumnos.value = []; return; }
+    paginaActual.value = 1;
     debounceTimer = setTimeout(() => buscarAlumnos(), 350);
 });
 
+watch(paginaActual, (newVal, oldVal) => {
+    if (newVal !== oldVal) buscarAlumnos();
+});
+
 const buscarAlumnos = async () => {
-    if (!busqueda.value.trim()) return;
     cargando.value = true;
     try {
-        const res = await axios.get('/api/v1/alumnos/buscar', { params: { q: busqueda.value } });
-        alumnos.value = res.data.alumnos;
+        const res = await axios.get('/api/v1/alumnos/buscar', { params: { q: busqueda.value, page: paginaActual.value } });
+        alumnos.value = res.data.alumnos.data;
+        totalPaginas.value = res.data.alumnos.last_page;
     } catch (e) {
         mostrarSnack('Error al buscar alumnos.', 'error');
     } finally {
         cargando.value = false;
     }
+};
+
+const initialFetch = async () => {
+    // Si la pagina esta en estado 1 en el componente y acabamos de montar
+    buscarAlumnos();
+};
+
+onMounted(() => {
+    mounted.value = true;
+    initialFetch();
+    erp.registerTabExport('BuscadorAlumnos', {
+        label: 'Exportar Alumnos Excel',
+        icon:  'mdi-microsoft-excel',
+        fn:    exportarExcel,
+    });
+});
+
+onUnmounted(() => {
+    erp.unregisterTabExport('BuscadorAlumnos');
+});
+
+// ─── Exportar a Excel ─────────────────────────────────────────────────────────
+const exportarExcel = () => {
+    if (!alumnos.value || alumnos.value.length === 0) {
+        alert("No hay alumnos para exportar");
+        return;
+    }
+    
+    // Preparar JSON para exportación limpia
+    const dataToExport = alumnos.value.map(a => ({
+        ID: a.id,
+        Nombre: a.nombre_alumno,
+        'Diplomado': a.nombre_diplomado || 'No asignado',
+        Celular: a.celular,
+        Correo: a.correo,
+        CURP: a.curp,
+        'Saldo ($)': parseFloat(a.saldo || 0)
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Alumnos_Buscador");
+    XLSX.writeFile(wb, "Reporte_Alumnos.xlsx");
 };
 
 // ── Seleccionar alumno ────────────────────────────────────────────────────────
@@ -176,6 +236,25 @@ const metodosPago = ['Efectivo', 'Transferencia Bancaria', 'Depósito en OXXO', 
   <AuthenticatedLayout>
     <Head title="Buscador de Alumnos" />
 
+    <!-- ── Telerport: Acción Modular de Barra Superior (Desktop) ── -->
+    <Teleport to="#erp-tab-actions" v-if="mounted">
+        <!-- New Admission button -->
+        <button @click="erp.openErpWindow({ url: route('seguimiento.inscripciones'), name: 'Admisiones', icon: 'mdi-account-plus-outline' })"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">
+            <v-icon size="16">mdi-account-plus</v-icon>
+            <span class="text-sm font-semibold">Nueva Admisión</span>
+        </button>
+
+        <!-- Export Excel button -->
+        <button @click="exportarExcel"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors shadow-sm border border-emerald-200"
+                :class="{ 'opacity-50 cursor-not-allowed': alumnos.length === 0 }"
+                :disabled="alumnos.length === 0">
+            <v-icon size="16">mdi-microsoft-excel</v-icon>
+            <span class="text-sm font-semibold">Exportar ({{alumnos.length}})</span>
+        </button>
+    </Teleport>
+
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-8">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -255,6 +334,18 @@ const metodosPago = ['Efectivo', 'Transferencia Bancaria', 'Depósito en OXXO', 
                   </div>
                 </div>
               </div>
+
+              <!-- Paginación -->
+              <div v-if="totalPaginas > 1" class="mt-4 flex justify-center">
+                <v-pagination
+                  v-model="paginaActual"
+                  :length="totalPaginas"
+                  :total-visible="5"
+                  density="compact"
+                  active-color="indigo"
+                ></v-pagination>
+              </div>
+
             </div>
           </div>
 
@@ -302,12 +393,12 @@ const metodosPago = ['Efectivo', 'Transferencia Bancaria', 'Depósito en OXXO', 
                 <!-- Acciones de cabecera -->
                 <div class="flex items-center gap-2 flex-wrap">
                   <v-btn
-                    v-if="!editando && tabActiva === 'datos'"
+                    v-if="puedeEditarDatosMaestros && !editando && tabActiva === 'datos'"
                     size="small" color="white" variant="outlined"
                     prepend-icon="mdi-pencil"
                     @click="editando = true"
                   >Editar Datos</v-btn>
-                  <template v-if="editando && tabActiva === 'datos'">
+                  <template v-if="puedeEditarDatosMaestros && editando && tabActiva === 'datos'">
                     <v-btn size="small" color="success" variant="flat" :loading="guardandoDatos" prepend-icon="mdi-content-save" @click="guardarDatos">Guardar</v-btn>
                     <v-btn size="small" color="white" variant="text" @click="cancelarEdicion">Cancelar</v-btn>
                   </template>
@@ -782,33 +873,3 @@ const metodosPago = ['Efectivo', 'Transferencia Bancaria', 'Depósito en OXXO', 
     display: flex; align-items: center; justify-content: center;
 }
 </style>
-
-<!-- Componentes locales (inline) -->
-<script>
-// Pequeños sub-componentes para limpiar el template
-export default {
-  components: {
-    'seccion-card': {
-      props: ['titulo', 'icono'],
-      template: `
-        <div class="bg-seccion">
-          <div class="seccion-titulo">
-            <v-icon size="14" color="indigo">{{ icono }}</v-icon>
-            {{ titulo }}
-          </div>
-          <slot />
-        </div>
-      `
-    },
-    'campo-field': {
-      props: ['label'],
-      template: `
-        <div :class="$attrs.class">
-          <span class="campo-label">{{ label }}</span>
-          <slot />
-        </div>
-      `
-    }
-  }
-}
-</script>

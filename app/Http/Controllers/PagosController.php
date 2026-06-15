@@ -507,6 +507,40 @@ class PagosController extends Controller
             $pago->motivo_cancelacion = $request->motivo;
             $pago->save();
 
+            // Recalcular plan_pagos
+            if ($inscripcion->plan_pagos) {
+                $plan = is_string($inscripcion->plan_pagos) ? json_decode($inscripcion->plan_pagos, true) : $inscripcion->plan_pagos;
+                if (is_array($plan)) {
+                    // Total pagado activo actual (excluyendo el abono cancelado)
+                    $totalPagadoActivo = Pagos::where('alumno_id', $inscripcion->id)
+                                              ->where('status', 'Activo')
+                                              ->sum('pago_colegiatura');
+
+                    $montoAbono = (float) $totalPagadoActivo;
+                    foreach ($plan as &$cuota) {
+                        $cuota['abonado'] = 0;
+                        $cuota['estado'] = 'pendiente';
+
+                        if ($montoAbono > 0) {
+                            $montoCuota = (float) ($cuota['monto'] ?? 0);
+                            
+                            if ($montoAbono >= $montoCuota) {
+                                $cuota['abonado'] = $montoCuota;
+                                $cuota['estado'] = 'pagado';
+                                $montoAbono -= $montoCuota;
+                            } else {
+                                $cuota['abonado'] = $montoAbono;
+                                $cuota['estado'] = 'parcial';
+                                $montoAbono = 0;
+                            }
+                        }
+                    }
+
+                    $inscripcion->plan_pagos = json_encode($plan);
+                    $inscripcion->save();
+                }
+            }
+
             DB::commit();
 
             return response()->json([
@@ -561,12 +595,37 @@ class PagosController extends Controller
         ]);
 
         $inscripcion = Inscripcion::findOrFail($alumno_id);
-        $inscripcion->plan_pagos = json_encode($request->plan);
+        
+        $nuevoPlan = $request->plan;
+        $totalPagadoActivo = Pagos::where('alumno_id', $inscripcion->id)
+                                  ->where('status', 'Activo')
+                                  ->sum('pago_colegiatura');
+
+        $montoAbono = (float) $totalPagadoActivo;
+        foreach ($nuevoPlan as &$cuota) {
+            $cuota['abonado'] = 0;
+            $cuota['estado'] = 'pendiente';
+
+            if ($montoAbono > 0) {
+                $montoCuota = (float) ($cuota['monto'] ?? 0);
+                if ($montoAbono >= $montoCuota) {
+                    $cuota['abonado'] = $montoCuota;
+                    $cuota['estado'] = 'pagado';
+                    $montoAbono -= $montoCuota;
+                } else {
+                    $cuota['abonado'] = $montoAbono;
+                    $cuota['estado'] = 'parcial';
+                    $montoAbono = 0;
+                }
+            }
+        }
+
+        $inscripcion->plan_pagos = json_encode($nuevoPlan);
         $inscripcion->save();
 
         return response()->json([
             'message'  => 'Plan de pagos actualizado correctamente.',
-            'plan'     => $request->plan,
+            'plan'     => $nuevoPlan,
         ]);
     }
 
@@ -592,6 +651,201 @@ class PagosController extends Controller
 
         $pdf = Pdf::loadView('pdf.pago', compact('pago'));
         return $pdf->download('Recibo_Pago_' . $pago->idpago . '.pdf');
+    }
+
+    // ─── Vista Inertia del reporte financiero ────────────────────────────────
+    public function vistaFinanciero()
+    {
+        return Inertia::render('ReporteFinanciero');
+    }
+
+    // ─── API: Dashboard financiero del director ───────────────────────────────
+    public function reporteFinancieroDashboard()
+    {
+        $hoy          = Carbon::now();
+        $inicioMes    = $hoy->copy()->startOfMonth();
+        $finMes       = $hoy->copy()->endOfMonth();
+        $inicioSemana = $hoy->copy()->startOfWeek(Carbon::MONDAY);
+        $finSemana    = $hoy->copy()->endOfWeek(Carbon::SUNDAY);
+        $inicio30     = $hoy->copy()->subDays(29)->startOfDay();
+
+        // ── Colegiaturas (hoy / semana / mes) ─────────────────────────────
+        $colHoy    = (float) Pagos::where('status', 'Activo')
+            ->whereDate('Fecha_PrimerContacto', $hoy->toDateString())
+            ->sum('pago_colegiatura');
+
+        $colSemana = (float) Pagos::where('status', 'Activo')
+            ->whereBetween('Fecha_PrimerContacto', [$inicioSemana, $finSemana])
+            ->sum('pago_colegiatura');
+
+        $colMes    = (float) Pagos::where('status', 'Activo')
+            ->whereBetween('Fecha_PrimerContacto', [$inicioMes, $finMes])
+            ->sum('pago_colegiatura');
+
+        // ── Inscripciones (hoy / semana / mes) ────────────────────────────
+        $insHoy    = (float) Inscripcion::whereDate('fecha_inscripcion', $hoy->toDateString())
+            ->sum('monto_inscripcion');
+
+        $insSemana = (float) Inscripcion::whereBetween('fecha_inscripcion', [$inicioSemana, $finSemana])
+            ->sum('monto_inscripcion');
+
+        $insMes    = (float) Inscripcion::whereBetween('fecha_inscripcion', [$inicioMes, $finMes])
+            ->sum('monto_inscripcion');
+
+        // ── Ingresos diarios: últimos 30 días ─────────────────────────────
+        $colDiarios = Pagos::selectRaw("DATE(Fecha_PrimerContacto) as dia, SUM(pago_colegiatura) as total")
+            ->where('status', 'Activo')
+            ->where('Fecha_PrimerContacto', '>=', $inicio30->toDateString())
+            ->groupByRaw("DATE(Fecha_PrimerContacto)")
+            ->pluck('total', 'dia');
+
+        $insDiarios = Inscripcion::selectRaw("DATE(fecha_inscripcion) as dia, SUM(monto_inscripcion) as total")
+            ->where('fecha_inscripcion', '>=', $inicio30->toDateString())
+            ->groupByRaw("DATE(fecha_inscripcion)")
+            ->pluck('total', 'dia');
+
+        $ingresosDiarios = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $f = $hoy->copy()->subDays($i)->format('Y-m-d');
+            $c = (float)($colDiarios[$f] ?? 0);
+            $n = (float)($insDiarios[$f] ?? 0);
+            $ingresosDiarios[] = ['fecha' => $f, 'colegiaturas' => $c, 'inscripciones' => $n, 'total' => $c + $n];
+        }
+
+        // ── Desglose por diplomado (mes actual) ───────────────────────────
+        $colDip = Pagos::selectRaw("pagos_colegiatura.diplomado_id, diplomados.nombre as diplomado, SUM(pagos_colegiatura.pago_colegiatura) as col, COUNT(*) as npagos")
+            ->join('diplomados', 'diplomados.id', '=', 'pagos_colegiatura.diplomado_id')
+            ->where('pagos_colegiatura.status', 'Activo')
+            ->whereBetween('pagos_colegiatura.Fecha_PrimerContacto', [$inicioMes, $finMes])
+            ->groupBy('pagos_colegiatura.diplomado_id', 'diplomados.nombre')
+            ->get()->keyBy('diplomado_id');
+
+        $insDip = Inscripcion::selectRaw("alumno_inscripcion.diplomado_id, diplomados.nombre as diplomado, SUM(alumno_inscripcion.monto_inscripcion) as ins, COUNT(*) as nins")
+            ->join('diplomados', 'diplomados.id', '=', 'alumno_inscripcion.diplomado_id')
+            ->whereBetween('alumno_inscripcion.fecha_inscripcion', [$inicioMes, $finMes])
+            ->groupBy('alumno_inscripcion.diplomado_id', 'diplomados.nombre')
+            ->get()->keyBy('diplomado_id');
+
+        $dipIds = collect(
+            array_merge($colDip->keys()->toArray(), $insDip->keys()->toArray())
+        )->unique();
+
+        $porDiplomado = $dipIds->map(function ($id) use ($colDip, $insDip) {
+            $c = $colDip->get($id);
+            $n = $insDip->get($id);
+            return [
+                'diplomado_id'  => $id,
+                'diplomado'     => $c ? $c->diplomado : ($n ? $n->diplomado : '—'),
+                'colegiaturas'  => (float)($c->col  ?? 0),
+                'inscripciones' => (float)($n->ins  ?? 0),
+                'num_pagos'     => (int)($c->npagos ?? 0),
+                'num_inscritos' => (int)($n->nins   ?? 0),
+                'total'         => (float)($c->col ?? 0) + (float)($n->ins ?? 0),
+            ];
+        })->sortByDesc('total')->values();
+
+        // ── Proyección cierre de mes ──────────────────────────────────────
+        // Suma de colegiaturas esperadas (cartera cuya próxima fecha cae en el resto del mes)
+        $todasIns = Inscripcion::with(['pagos' => fn($q) => $q->where('status', 'Activo')])
+            ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
+            ->select('alumno_inscripcion.*', 'diplomados.costo_total as costo_diplomado')
+            ->get();
+
+        $proyectadoPendiente = 0.0;
+        foreach ($todasIns as $a) {
+            $pagado = $a->pagos->sum('pago_colegiatura');
+            $saldo  = $a->costo_diplomado - ($a->monto_inscripcion + $pagado);
+            if ($saldo <= 0) continue;
+            $cantPagos = $a->pagos->count();
+            $fechaBase = $a->fecha_primer_pago_colegiatura ?? $a->created_at;
+            $proxFecha = Carbon::parse($fechaBase)->addMonths($cantPagos)->startOfDay();
+            if ($proxFecha->gt($hoy) && $proxFecha->lte($finMes)) {
+                // Estima cuota promedio o 25% del saldo si no hay historial
+                $cuotaEstimada = $cantPagos > 0 ? ($pagado / $cantPagos) : ($saldo * 0.25);
+                $proyectadoPendiente += min($saldo, $cuotaEstimada);
+            }
+        }
+
+        // ── Detalle de colegiaturas HOY ───────────────────────────────────
+        $detalleHoy = Pagos::select(
+                'pagos_colegiatura.id',
+                'pagos_colegiatura.pago_colegiatura as monto',
+                'pagos_colegiatura.Fecha_PrimerContacto as fecha_op',
+                'pagos_colegiatura.created_at as registrado',
+                'alumno_inscripcion.nombre_alumno',
+                'diplomados.nombre as diplomado',
+                'cuenta_deposito.banco',
+                'cuenta_deposito.titular',
+                'users.name as cajero'
+            )
+            ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
+            ->join('diplomados', 'diplomados.id', '=', 'pagos_colegiatura.diplomado_id')
+            ->join('cuenta_deposito', 'cuenta_deposito.id', '=', 'pagos_colegiatura.cuentadeposito')
+            ->join('users', 'users.id', '=', 'pagos_colegiatura.tutor')
+            ->where('pagos_colegiatura.status', 'Activo')
+            ->whereDate('pagos_colegiatura.Fecha_PrimerContacto', $hoy->toDateString())
+            ->orderByDesc('pagos_colegiatura.created_at')
+            ->get();
+
+        // ── Inscripciones de HOY ──────────────────────────────────────────
+        $inscripcionesHoy = Inscripcion::select(
+                'alumno_inscripcion.id',
+                'alumno_inscripcion.nombre_alumno',
+                'alumno_inscripcion.monto_inscripcion as monto',
+                'alumno_inscripcion.fecha_inscripcion',
+                'diplomados.nombre as diplomado',
+                DB::raw("COALESCE(users.name, '—') as asesor")
+            )
+            ->join('diplomados', 'diplomados.id', '=', 'alumno_inscripcion.diplomado_id')
+            ->leftJoin('users', 'users.id', '=', 'alumno_inscripcion.asesor')
+            ->whereDate('alumno_inscripcion.fecha_inscripcion', $hoy->toDateString())
+            ->orderByDesc('alumno_inscripcion.created_at')
+            ->get();
+
+        // ── Resumen semanal: desglose por día (esta semana) ───────────────
+        $resumenSemana = Pagos::selectRaw("DAYOFWEEK(Fecha_PrimerContacto) as dow, DATE(Fecha_PrimerContacto) as dia, SUM(pago_colegiatura) as col")
+            ->where('status', 'Activo')
+            ->whereBetween('Fecha_PrimerContacto', [$inicioSemana, $finSemana])
+            ->groupByRaw("DAYOFWEEK(Fecha_PrimerContacto), DATE(Fecha_PrimerContacto)")
+            ->pluck('col', 'dia');
+
+        $dias = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+        $semanaDiaria = [];
+        for ($d = 0; $d < 7; $d++) {
+            $f = $inicioSemana->copy()->addDays($d)->format('Y-m-d');
+            $semanaDiaria[] = [
+                'dia'    => $dias[$d],
+                'fecha'  => $f,
+                'total'  => (float)($resumenSemana[$f] ?? 0),
+                'hoy'    => $f === $hoy->toDateString(),
+            ];
+        }
+
+        return response()->json([
+            'resumen' => [
+                'hoy_colegiaturas'     => $colHoy,
+                'hoy_inscripciones'    => $insHoy,
+                'hoy_total'            => $colHoy + $insHoy,
+                'semana_colegiaturas'  => $colSemana,
+                'semana_inscripciones' => $insSemana,
+                'semana_total'         => $colSemana + $insSemana,
+                'mes_colegiaturas'     => $colMes,
+                'mes_inscripciones'    => $insMes,
+                'mes_total'            => $colMes + $insMes,
+                'proyeccion_cierre'    => $colMes + $insMes + $proyectadoPendiente,
+                'proyectado_restante'  => $proyectadoPendiente,
+                'dia_actual'           => (int) $hoy->day,
+                'dias_en_mes'          => (int) $finMes->day,
+            ],
+            'ingresos_diarios'  => $ingresosDiarios,
+            'semana_diaria'     => $semanaDiaria,
+            'por_diplomado'     => $porDiplomado,
+            'detalle_hoy'       => $detalleHoy,
+            'inscripciones_hoy' => $inscripcionesHoy,
+            'mes_nombre'        => $hoy->locale('es')->isoFormat('MMMM YYYY'),
+            'semana_label'      => $inicioSemana->format('d/m') . ' – ' . $finSemana->format('d/m'),
+            'generado_en'       => $hoy->toISOString(),
+        ]);
     }
 
     public function getCalendarioPagos()
@@ -634,6 +888,7 @@ class PagosController extends Controller
                 'diplomado' => $alumno->diplomado_nombre,
                 'saldo' => $alumno->saldo,
                 'celular' => $alumno->celular,
+                'correo' => $alumno->correo,
                 'fecha_pago' => $fechaProximoPago->format('Y-m-d'),
                 'dias_retraso' => $hoy->diffInDays($fechaProximoPago, false) * -1
             ];
