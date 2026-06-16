@@ -71,6 +71,7 @@ Route::get('/crud-alumnos', [AlumnoController::class, 'crudalumnos']);
 Route::get('/crud-pagos', [PagosController::class, 'crudPagos']);
 
 Route::get('/contabilidad', [PagosController::class, 'vistaContabilidad'])->name('vista.contabilidad')->middleware('auth');
+Route::get('/finanzas/dashboard', [PagosController::class, 'vistaDashboardFinanciero'])->name('finanzas.dashboard')->middleware('auth');
 
 
 Route::get('/mensualidades/pagos',[PagosController::class,'vistaPagos'])->name('vista.pagos')->middleware( 'auth');

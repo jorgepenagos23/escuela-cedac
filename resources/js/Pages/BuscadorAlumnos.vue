@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 import { Head, usePage } from "@inertiajs/vue3";
 import { ref, computed, watch } from 'vue';
 import axios from 'axios';
@@ -66,7 +67,12 @@ const seleccionarAlumno = (alumno) => {
     editando.value     = false;
     editandoPlan.value = false;
     formDatos.value    = clonar(alumno);
-    planEditable.value = alumno.plan_pagos ? alumno.plan_pagos.map(p => ({ ...p })) : [];
+    const plan = alumno.plan_pagos;
+    planEditable.value = Array.isArray(plan)
+        ? plan.map(p => ({ ...p }))
+        : plan && typeof plan === 'object'
+            ? Object.values(plan).map(p => ({ ...p }))
+            : [];
 };
 
 const clonar = (obj) => JSON.parse(JSON.stringify(obj));
@@ -153,7 +159,12 @@ const guardarPlan = async () => {
 };
 
 const cancelarEditarPlan = () => {
-    planEditable.value = alumnoActivo.value.plan_pagos ? alumnoActivo.value.plan_pagos.map(p => ({ ...p })) : [];
+    const plan = alumnoActivo.value.plan_pagos;
+    planEditable.value = Array.isArray(plan)
+        ? plan.map(p => ({ ...p }))
+        : plan && typeof plan === 'object'
+            ? Object.values(plan).map(p => ({ ...p }))
+            : [];
     editandoPlan.value = false;
 };
 
@@ -174,6 +185,7 @@ const metodosPago = ['Efectivo', 'Transferencia Bancaria', 'Depósito en OXXO', 
 
 <template>
   <AuthenticatedLayout>
+    <ErpTopbar modulo="Alumnos" titulo="Buscador de Alumnos" />
     <Head title="Buscador de Alumnos" />
 
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-8">
@@ -337,105 +349,138 @@ const metodosPago = ['Efectivo', 'Transferencia Bancaria', 'Depósito en OXXO', 
                   <div class="expediente-body">
 
                     <!-- Bloque: Identificación -->
-                    <seccion-card titulo="Identificación Personal" icono="mdi-card-account-details-outline">
+                    <div class="bg-seccion">
+                      <div class="seccion-titulo">
+                        <v-icon size="14" color="indigo">mdi-card-account-details-outline</v-icon>
+                        Identificación Personal
+                      </div>
                       <div class="campos-grid">
-                        <campo-field label="Nombre Completo">
+                        <div>
+                          <span class="campo-label">Nombre Completo</span>
                           <v-text-field v-if="editando" v-model="formDatos.nombre_alumno" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor">{{ alumnoActivo.nombre_alumno }}</span>
-                        </campo-field>
-                        <campo-field label="CURP">
+                        </div>
+                        <div>
+                          <span class="campo-label">CURP</span>
                           <v-text-field v-if="editando" v-model="formDatos.curp" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor font-mono">{{ alumnoActivo.curp || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Celular Principal">
+                        </div>
+                        <div>
+                          <span class="campo-label">Celular Principal</span>
                           <v-text-field v-if="editando" v-model="formDatos.celular" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor">{{ alumnoActivo.celular || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Contacto Adicional">
+                        </div>
+                        <div>
+                          <span class="campo-label">Contacto Adicional</span>
                           <v-text-field v-if="editando" v-model="formDatos.adicional" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor">{{ alumnoActivo.adicional || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Correo Electrónico" class="md:col-span-2">
+                        </div>
+                        <div class="md:col-span-2">
+                          <span class="campo-label">Correo Electrónico</span>
                           <v-text-field v-if="editando" v-model="formDatos.correo" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor">{{ alumnoActivo.correo || '—' }}</span>
-                        </campo-field>
+                        </div>
                       </div>
-                    </seccion-card>
+                    </div>
 
                     <!-- Bloque: Domicilio -->
-                    <seccion-card titulo="Domicilio y Emergencia" icono="mdi-map-marker-radius">
+                    <div class="bg-seccion">
+                      <div class="seccion-titulo">
+                        <v-icon size="14" color="indigo">mdi-map-marker-radius</v-icon>
+                        Domicilio y Emergencia
+                      </div>
                       <div class="campos-grid">
-                        <campo-field label="Estado">
+                        <div>
+                          <span class="campo-label">Estado</span>
                           <v-text-field v-if="editando" v-model="formDatos.estado" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor">{{ alumnoActivo.estado || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Municipio / Ciudad">
+                        </div>
+                        <div>
+                          <span class="campo-label">Municipio / Ciudad</span>
                           <v-text-field v-if="editando" v-model="formDatos.municipio" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor">{{ alumnoActivo.municipio || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Dirección Completa" class="md:col-span-2">
+                        </div>
+                        <div class="md:col-span-2">
+                          <span class="campo-label">Dirección Completa</span>
                           <v-text-field v-if="editando" v-model="formDatos.direccion_completa" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor">{{ alumnoActivo.direccion_completa || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Contacto de Emergencia">
+                        </div>
+                        <div>
+                          <span class="campo-label">Contacto de Emergencia</span>
                           <v-text-field v-if="editando" v-model="formDatos.nombre_emergencia" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor">{{ alumnoActivo.nombre_emergencia || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Parentesco">
+                        </div>
+                        <div>
+                          <span class="campo-label">Parentesco</span>
                           <v-text-field v-if="editando" v-model="formDatos.parentesco_emergencia" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor">{{ alumnoActivo.parentesco_emergencia || '—' }}</span>
-                        </campo-field>
+                        </div>
                       </div>
-                    </seccion-card>
+                    </div>
 
                     <!-- Bloque: Académico y Financiero -->
-                    <seccion-card titulo="Académico y Financiero" icono="mdi-cash-multiple">
+                    <div class="bg-seccion">
+                      <div class="seccion-titulo">
+                        <v-icon size="14" color="indigo">mdi-cash-multiple</v-icon>
+                        Académico y Financiero
+                      </div>
                       <div class="campos-grid">
-                        <campo-field label="Diplomado Inscrito">
+                        <div>
+                          <span class="campo-label">Diplomado Inscrito</span>
                           <span class="campo-valor text-indigo-700 font-semibold">{{ alumnoActivo.nombre_diplomado || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Grupo / Campaña">
+                        </div>
+                        <div>
+                          <span class="campo-label">Grupo / Campaña</span>
                           <span class="campo-valor">{{ alumnoActivo.grupo || '—' }} · {{ alumnoActivo.campana || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Fecha de Inscripción">
+                        </div>
+                        <div>
+                          <span class="campo-label">Fecha de Inscripción</span>
                           <span class="campo-valor font-mono">{{ alumnoActivo.fecha_inscripcion || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Monto de Inscripción">
+                        </div>
+                        <div>
+                          <span class="campo-label">Monto de Inscripción</span>
                           <span class="campo-valor text-green-700 font-bold">${{ Number(alumnoActivo.monto_inscripcion || 0).toLocaleString('es-MX') }} MXN</span>
-                        </campo-field>
-                        <campo-field label="Saldo Pendiente">
+                        </div>
+                        <div>
+                          <span class="campo-label">Saldo Pendiente</span>
                           <span class="campo-valor font-bold" :class="saldoClass(alumnoActivo.saldo)">
                             ${{ Number(alumnoActivo.saldo || 0).toLocaleString('es-MX') }} MXN
                           </span>
-                        </campo-field>
-                        <campo-field label="Costo Total del Programa">
+                        </div>
+                        <div>
+                          <span class="campo-label">Costo Total del Programa</span>
                           <span class="campo-valor">${{ Number(alumnoActivo.costo_total || 0).toLocaleString('es-MX') }} MXN</span>
-                        </campo-field>
-                        <campo-field label="1er Pago de Colegiatura">
+                        </div>
+                        <div>
+                          <span class="campo-label">1er Pago de Colegiatura</span>
                           <v-text-field v-if="editando" v-model="formDatos.fecha_primer_pago_colegiatura" type="date" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor font-mono">{{ alumnoActivo.fecha_primer_pago_colegiatura || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Método de Pago Inscripción">
+                        </div>
+                        <div>
+                          <span class="campo-label">Método de Pago Inscripción</span>
                           <v-select v-if="editando" v-model="formDatos.metodo_pago_inscripcion" :items="metodosPago" variant="outlined" density="compact" hide-details />
                           <span v-else class="campo-valor">{{ alumnoActivo.metodo_pago_inscripcion || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Tutor Asignado">
+                        </div>
+                        <div>
+                          <span class="campo-label">Tutor Asignado</span>
                           <span class="campo-valor">{{ alumnoActivo.tutor_nombre || '—' }}</span>
-                        </campo-field>
-                        <campo-field label="Asesor / Vendedor">
+                        </div>
+                        <div>
+                          <span class="campo-label">Asesor / Vendedor</span>
                           <span class="campo-valor">{{ alumnoActivo.asesor_nombre || '—' }}</span>
-                        </campo-field>
-                        <campo-field v-if="alumnoActivo.descuento_id" label="Descuento Aplicado" class="md:col-span-2">
+                        </div>
+                        <div v-if="alumnoActivo.descuento_id" class="md:col-span-2">
+                          <span class="campo-label">Descuento Aplicado</span>
                           <div class="flex items-center gap-2">
                             <v-icon size="small" color="deep-purple-darken-1">mdi-tag-heart</v-icon>
                             <span class="campo-valor font-semibold text-deep-purple-darken-3">
-                              {{ alumnoActivo.descuento_nombre }} 
+                              {{ alumnoActivo.descuento_nombre }}
                               (Ahorro: ${{ Number(alumnoActivo.monto_descuento).toLocaleString('es-MX') }} MXN)
                             </span>
                           </div>
-                        </campo-field>
+                        </div>
                       </div>
-                    </seccion-card>
+                    </div>
 
                   </div>
                 </v-window-item>
@@ -782,33 +827,3 @@ const metodosPago = ['Efectivo', 'Transferencia Bancaria', 'Depósito en OXXO', 
     display: flex; align-items: center; justify-content: center;
 }
 </style>
-
-<!-- Componentes locales (inline) -->
-<script>
-// Pequeños sub-componentes para limpiar el template
-export default {
-  components: {
-    'seccion-card': {
-      props: ['titulo', 'icono'],
-      template: `
-        <div class="bg-seccion">
-          <div class="seccion-titulo">
-            <v-icon size="14" color="indigo">{{ icono }}</v-icon>
-            {{ titulo }}
-          </div>
-          <slot />
-        </div>
-      `
-    },
-    'campo-field': {
-      props: ['label'],
-      template: `
-        <div :class="$attrs.class">
-          <span class="campo-label">{{ label }}</span>
-          <slot />
-        </div>
-      `
-    }
-  }
-}
-</script>

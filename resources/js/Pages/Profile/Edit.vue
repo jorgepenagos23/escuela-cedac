@@ -4,6 +4,7 @@ import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
 import { Head } from '@inertiajs/vue3';
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 
 defineProps({
     mustVerifyEmail: {
@@ -19,6 +20,7 @@ defineProps({
     <Head title="Profile" />
 
     <AuthenticatedLayout>
+        <ErpTopbar modulo="Configuración" titulo="Perfil de Usuario" />
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Profile</h2>
         </template>

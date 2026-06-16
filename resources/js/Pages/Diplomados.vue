@@ -2,10 +2,12 @@
 import { ref } from 'vue';
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 </script>
 
 <template>
   <AuthenticatedLayout>
+    <ErpTopbar modulo="Catálogos" titulo="Portafolio de Diplomados" />
     <Head title="Directorio de Diplomados" />
     
     <div class="bg-gray-50 min-h-screen pb-10">
@@ -30,7 +32,7 @@ import { Head } from "@inertiajs/vue3";
           <div class="mt-4 md:mt-0">
               <v-dialog v-model="modalAgregar" max-width="600" persistent>
                   <template v-slot:activator="{ props: activatorProps }">
-                      <v-btn v-if="$page.props.auth.user.roles && $page.props.auth.user.roles.includes('Administrador')" v-bind="activatorProps" color="indigo-darken-3" variant="elevated" prepend-icon="mdi-plus-circle" size="large">
+                      <v-btn v-if="$page.props.auth.user.permissions?.includes('crear_diplomados')" v-bind="activatorProps" color="indigo-darken-3" variant="elevated" prepend-icon="mdi-plus-circle" size="large">
                           Agregar Nuevo Diplomado
                       </v-btn>
                   </template>
@@ -179,7 +181,7 @@ import { Head } from "@inertiajs/vue3";
                         <span class="text-xs font-semibold text-gray-600"><v-icon size="x-small" class="mr-1">mdi-account-tie</v-icon>{{ item.tutor_nombre || 'Sin asignar' }}</span>
                     </template>
                     <template v-slot:item.acciones="{ item }">
-                        <v-btn v-if="$page.props.auth.user.roles && $page.props.auth.user.roles.includes('Administrador')" 
+                        <v-btn v-if="$page.props.auth.user.permissions?.includes('actualizar_datos_maestros')"
                                icon="mdi-pencil" size="small" color="primary" variant="text" @click="abrirEditar(item)"></v-btn>
                     </template>
                 </v-data-table>

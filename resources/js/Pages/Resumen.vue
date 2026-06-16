@@ -1,10 +1,12 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 </script>
 
 <template>
   <AuthenticatedLayout>
+    <ErpTopbar modulo="Reportes" titulo="Reporte Financiero y Administrativo" />
     <Head title="Reporte Financiero y Administrativo" />
     
     <div class="bg-gray-50 min-h-screen pb-10">

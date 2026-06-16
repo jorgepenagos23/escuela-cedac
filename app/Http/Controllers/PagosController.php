@@ -127,6 +127,185 @@ class PagosController extends Controller
         return Inertia::render('Contabilidad', ['userId' => $user->id]);
      }
 
+     public function vistaDashboardFinanciero(){
+        return Inertia::render('DashboardFinanciero');
+     }
+
+     /**
+      * DASHBOARD FINANCIERO — Estado de resultados con corte de fechas
+      */
+     public function dashboardFinanciero(Request $request)
+     {
+         $desde = $request->get('desde', \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'));
+         $hasta = $request->get('hasta', \Carbon\Carbon::now()->format('Y-m-d'));
+
+         // ── 1. Colegiaturas activas en el período ────────────────────────────
+         $pagosActivos = Pagos::join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
+             ->join('diplomados',      'diplomados.id',      '=', 'pagos_colegiatura.diplomado_id')
+             ->join('cuenta_deposito', 'cuenta_deposito.id', '=', 'pagos_colegiatura.cuentadeposito')
+             ->join('users',           'users.id',           '=', 'pagos_colegiatura.tutor')
+             ->select(
+                 'pagos_colegiatura.pago_colegiatura as monto',
+                 'diplomados.nombre as diplomado',
+                 'cuenta_deposito.banco',
+                 'cuenta_deposito.titular as titular',
+                 'users.name as cajero'
+             )
+             ->whereDate('pagos_colegiatura.Fecha_PrimerContacto', '>=', $desde)
+             ->whereDate('pagos_colegiatura.Fecha_PrimerContacto', '<=', $hasta)
+             ->where('pagos_colegiatura.status', 'activo')
+             ->get();
+
+         $totalColegiaturas = $pagosActivos->sum('monto');
+
+         // ── 2. Cancelaciones en el período ───────────────────────────────────
+         $pagosCancelados = Pagos::whereDate('Fecha_PrimerContacto', '>=', $desde)
+             ->whereDate('Fecha_PrimerContacto', '<=', $hasta)
+             ->where('status', 'Cancelado')
+             ->get();
+
+         $totalCancelado = $pagosCancelados->sum('pago_colegiatura');
+
+         // ── 3. Inscripciones en el período ───────────────────────────────────
+         $inscripcionesPeriodo = Inscripcion::whereDate('fecha_inscripcion', '>=', $desde)
+             ->whereDate('fecha_inscripcion', '<=', $hasta)
+             ->selectRaw('COUNT(*) as total_alumnos, SUM(monto_inscripcion) as total_monto')
+             ->first();
+
+         // ── 4. Desglose por banco ─────────────────────────────────────────────
+         $porBanco = $pagosActivos->groupBy('banco')->map(fn($g, $k) => [
+             'banco' => $k,
+             'monto' => $g->sum('monto'),
+             'count' => $g->count(),
+         ])->values()->sortByDesc('monto')->values();
+
+         // ── 5. Desglose por diplomado ─────────────────────────────────────────
+         $porDiplomado = $pagosActivos->groupBy('diplomado')->map(fn($g, $k) => [
+             'diplomado' => $k,
+             'monto'     => $g->sum('monto'),
+             'count'     => $g->count(),
+         ])->values()->sortByDesc('monto')->values();
+
+         // ── 6. Desglose por cajero ─────────────────────────────────────────────
+         $porCajero = $pagosActivos->groupBy('cajero')->map(fn($g, $k) => [
+             'cajero' => $k,
+             'monto'  => $g->sum('monto'),
+             'count'  => $g->count(),
+         ])->values()->sortByDesc('monto')->values();
+
+         // ── 7. Cartera total activa ────────────────────────────────────────────
+         $cartera = Inscripcion::join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
+             ->where('alumno_inscripcion.saldo', '>', 0)
+             ->selectRaw('
+                 COUNT(alumno_inscripcion.id) as alumnos_deudores,
+                 SUM(alumno_inscripcion.saldo) as total_cartera
+             ')
+             ->first();
+
+         // ── 8. Cartera vencida (cálculo matemático) ───────────────────────────
+         $todasInscripciones = Inscripcion::with(['pagos'])
+             ->join('diplomados', 'alumno_inscripcion.diplomado_id', '=', 'diplomados.id')
+             ->select('alumno_inscripcion.*', 'diplomados.costo_total')
+             ->get();
+
+         $hoy         = \Carbon\Carbon::now()->startOfDay();
+         $finSemana   = \Carbon\Carbon::now()->endOfWeek();
+         $montoVencido = 0; $countVencidos = 0;
+         $montoSemana  = 0; $countSemana   = 0;
+         $montoProximo = 0; $countProximos = 0;
+
+         foreach ($todasInscripciones as $ins) {
+             $importePagado   = $ins->pagos->sum('pago_colegiatura');
+             $saldoMatematico = $ins->costo_total - ($ins->monto_inscripcion + $importePagado);
+             if ($saldoMatematico <= 0) continue;
+
+             $fechaBase = $ins->fecha_primer_pago_colegiatura ?? $ins->created_at;
+             $fechaProx = \Carbon\Carbon::parse($fechaBase)->addMonths($ins->pagos->count())->startOfDay();
+
+             if ($fechaProx->lt($hoy)) {
+                 $montoVencido += $saldoMatematico; $countVencidos++;
+             } elseif ($fechaProx->between($hoy, $finSemana)) {
+                 $montoSemana  += $saldoMatematico; $countSemana++;
+             } else {
+                 $montoProximo += $saldoMatematico; $countProximos++;
+             }
+         }
+
+         return response()->json([
+             'periodo' => ['desde' => $desde, 'hasta' => $hasta],
+             'ingresos' => [
+                 'colegiaturas' => $totalColegiaturas,
+                 'inscripciones_monto' => (float)($inscripcionesPeriodo->total_monto ?? 0),
+                 'inscripciones_count' => (int)($inscripcionesPeriodo->total_alumnos ?? 0),
+                 'count_movimientos'   => $pagosActivos->count(),
+                 'total'               => $totalColegiaturas + (float)($inscripcionesPeriodo->total_monto ?? 0),
+             ],
+             'cancelaciones' => [
+                 'total' => $totalCancelado,
+                 'count' => $pagosCancelados->count(),
+             ],
+             'ingreso_neto' => $totalColegiaturas + (float)($inscripcionesPeriodo->total_monto ?? 0) - $totalCancelado,
+             'cartera' => [
+                 'total'            => (float)($cartera->total_cartera ?? 0),
+                 'alumnos_deudores' => (int)($cartera->alumnos_deudores ?? 0),
+                 'vencida'          => ['monto' => $montoVencido,  'count' => $countVencidos],
+                 'esta_semana'      => ['monto' => $montoSemana,   'count' => $countSemana],
+                 'proxima'          => ['monto' => $montoProximo,  'count' => $countProximos],
+             ],
+             'desglose' => [
+                 'por_banco'      => $porBanco,
+                 'por_diplomado'  => $porDiplomado,
+                 'por_cajero'     => $porCajero,
+             ],
+         ]);
+     }
+
+     /**
+      * REPORTE CONCILIACIÓN — todos los abonos con filtros opcionales de fecha
+      */
+     public function reporteConciliacion(Request $request)
+     {
+         $query = Pagos::select(
+             'pagos_colegiatura.id as id',
+             'pagos_colegiatura.alumno_id',
+             'pagos_colegiatura.pago_colegiatura as monto',
+             'pagos_colegiatura.Fecha_PrimerContacto as fecha_operacion',
+             'pagos_colegiatura.created_at as fecha_ingreso',
+             'pagos_colegiatura.status',
+             'alumno_inscripcion.nombre_alumno',
+             'alumno_inscripcion.saldo as saldo_actual',
+             'diplomados.nombre as diplomado',
+             'cuenta_deposito.banco',
+             'cuenta_deposito.titular as titular_cuenta',
+             'cuenta_deposito.numero_cuenta',
+             'users.name as cajero'
+         )
+         ->join('alumno_inscripcion', 'alumno_inscripcion.id', '=', 'pagos_colegiatura.alumno_id')
+         ->join('diplomados',         'diplomados.id',         '=', 'pagos_colegiatura.diplomado_id')
+         ->join('cuenta_deposito',    'cuenta_deposito.id',    '=', 'pagos_colegiatura.cuentadeposito')
+         ->join('users',              'users.id',              '=', 'pagos_colegiatura.tutor');
+
+         if ($request->filled('desde')) {
+             $query->whereDate('pagos_colegiatura.Fecha_PrimerContacto', '>=', $request->desde);
+         }
+         if ($request->filled('hasta')) {
+             $query->whereDate('pagos_colegiatura.Fecha_PrimerContacto', '<=', $request->hasta);
+         }
+         if ($request->filled('status')) {
+             $query->where('pagos_colegiatura.status', $request->status);
+         } else {
+             $query->whereIn('pagos_colegiatura.status', ['activo', 'Cancelado']);
+         }
+
+         $pagos = $query->orderBy('pagos_colegiatura.Fecha_PrimerContacto', 'desc')->get();
+
+         return response()->json([
+             'pagos'        => $pagos,
+             'total'        => $pagos->where('status', 'activo')->sum('monto'),
+             'total_abonos' => $pagos->where('status', 'activo')->count(),
+         ]);
+     }
+
      public function reporteContabilidad(Request $request){
         $pagos = Pagos::select(
             'pagos_colegiatura.id as id_pago',
@@ -629,12 +808,13 @@ class PagosController extends Controller
             $fechaProximoPago = \Carbon\Carbon::parse($fecha_base)->addMonths($cantidadPagos)->startOfDay();
 
             $itemInfo = [
-                'id' => $alumno->id,
-                'nombre_alumno' => $alumno->nombre_alumno,
-                'diplomado' => $alumno->diplomado_nombre,
-                'saldo' => $alumno->saldo,
-                'celular' => $alumno->celular,
-                'fecha_pago' => $fechaProximoPago->format('Y-m-d'),
+                'id'           => $alumno->id,
+                'diplomado_id' => $alumno->diplomado_id,
+                'nombre_alumno'=> $alumno->nombre_alumno,
+                'diplomado'    => $alumno->diplomado_nombre,
+                'saldo'        => $alumno->saldo,
+                'celular'      => $alumno->celular,
+                'fecha_pago'   => $fechaProximoPago->format('Y-m-d'),
                 'dias_retraso' => $hoy->diffInDays($fechaProximoPago, false) * -1
             ];
 

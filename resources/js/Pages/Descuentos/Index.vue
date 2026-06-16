@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, useForm, router } from "@inertiajs/vue3";
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 import { ref, computed, watch } from "vue";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -139,6 +140,7 @@ const previewDescuento = computed(() => {
 
 <template>
     <AuthenticatedLayout>
+        <ErpTopbar modulo="Catálogos" titulo="Gestión de Descuentos" />
         <Head title="Lista de Descuentos" />
 
         <div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-8">

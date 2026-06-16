@@ -1,15 +1,17 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 </script>
 
 <template>
   <AuthenticatedLayout>
+    <ErpTopbar modulo="Alumnos" titulo="Padrón Global de Estudiantes" />
     <Head title="Directorio Global de Alumnos" />
-    
+
     <div class="bg-gray-50 min-h-screen pb-10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        
+
         <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
               <h2 class="text-2xl font-bold text-gray-800 flex items-center">

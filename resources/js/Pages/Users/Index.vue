@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -36,6 +37,7 @@ const submitRoleUpdate = () => {
     <Head title="Gestión de Usuarios" />
 
     <AuthenticatedLayout>
+        <ErpTopbar modulo="Configuración" titulo="Gestión de Usuarios" />
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Gestión de Usuarios</h2>
         </template>

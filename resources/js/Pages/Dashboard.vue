@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 import { Head, usePage }   from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import "../../css/app.css";
@@ -57,6 +58,7 @@ const rolLabel = computed(() => {
 <template>
     <Head title="Panel de Control" />
     <AuthenticatedLayout>
+        <ErpTopbar modulo="Inicio" titulo="Panel de Control" />
         <!-- Sin header slot → nav queda limpia -->
 
         <!-- ══ Pantalla principal del dashboard ══ -->

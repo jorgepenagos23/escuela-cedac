@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -85,6 +86,7 @@ onMounted(() => {
     <Head title="Módulo de Contabilidad" />
 
     <AuthenticatedLayout>
+        <ErpTopbar modulo="Finanzas" titulo="Módulo de Contabilidad" />
         <template #header>
             <div class="flex justify-between items-center w-full">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Módulo de Contabilidad y Auditoría</h2>

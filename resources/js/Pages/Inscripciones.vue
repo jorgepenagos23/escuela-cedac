@@ -2,10 +2,12 @@
 import { ref, watch } from 'vue';
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 </script>
 
 <template>
   <AuthenticatedLayout>
+    <ErpTopbar modulo="Inscripciones" titulo="Directorio de Inscripciones" />
     <Head title="Directorio de Inscripciones" />
     
     <div class="bg-gray-50 min-h-screen pb-10">

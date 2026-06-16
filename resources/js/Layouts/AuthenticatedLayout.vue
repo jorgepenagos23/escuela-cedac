@@ -11,6 +11,7 @@ import "../../css/app.css";
 
 const showingNavigationDropdown = ref(false);
 const paletaAbierta             = ref(false);
+const finanzasAbierto           = ref(false);
 </script>
 
 <template>
@@ -68,6 +69,70 @@ const paletaAbierta             = ref(false);
                                 <v-icon size="16" class="mr-1">mdi-view-dashboard-outline</v-icon>
                                 Dashboard
                             </NavLink>
+
+                            <!-- Finanzas dropdown -->
+                            <div class="relative hidden sm:block" @mouseenter="finanzasAbierto = true" @mouseleave="finanzasAbierto = false">
+                                <button
+                                    class="finanzas-nav-btn"
+                                    :class="{ 'finanzas-nav-btn--active': finanzasAbierto }"
+                                    @click="finanzasAbierto = !finanzasAbierto"
+                                >
+                                    <v-icon size="16" class="mr-1">mdi-finance</v-icon>
+                                    Finanzas
+                                    <svg class="h-3 w-3 ml-1 transition-transform" :class="{ 'rotate-180': finanzasAbierto }" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+
+                                <!-- Panel desplegable -->
+                                <Transition name="dropdown-fade">
+                                    <div v-show="finanzasAbierto" class="finanzas-dropdown">
+                                        <div class="finanzas-dropdown__header">
+                                            <span class="text-xs font-bold text-indigo-400 uppercase tracking-widest">Módulo Finanzas</span>
+                                        </div>
+
+                                        <Link href="/finanzas/dashboard" class="finanzas-dropdown__item" @click="finanzasAbierto = false">
+                                            <div class="finanzas-dropdown__icon" style="background: linear-gradient(135deg,#1a3a5c,#0070f3);">
+                                                <v-icon size="15" color="white">mdi-chart-areaspline</v-icon>
+                                            </div>
+                                            <div>
+                                                <div class="finanzas-dropdown__item-title">Dashboard Financiero</div>
+                                                <div class="finanzas-dropdown__item-sub">Estado de resultados · Cartera</div>
+                                            </div>
+                                        </Link>
+
+                                        <Link href="/crud-pagos" class="finanzas-dropdown__item" @click="finanzasAbierto = false">
+                                            <div class="finanzas-dropdown__icon" style="background: linear-gradient(135deg,#0d9488,#059669);">
+                                                <v-icon size="15" color="white">mdi-cash-multiple</v-icon>
+                                            </div>
+                                            <div>
+                                                <div class="finanzas-dropdown__item-title">Cartera de Cobranza</div>
+                                                <div class="finanzas-dropdown__item-sub">Pagos · Adeudos · Abonos</div>
+                                            </div>
+                                        </Link>
+
+                                        <Link href="/mensualidades/pagos" class="finanzas-dropdown__item" @click="finanzasAbierto = false">
+                                            <div class="finanzas-dropdown__icon" style="background: linear-gradient(135deg,#7c3aed,#4f46e5);">
+                                                <v-icon size="15" color="white">mdi-file-table-outline</v-icon>
+                                            </div>
+                                            <div>
+                                                <div class="finanzas-dropdown__item-title">Conciliación</div>
+                                                <div class="finanzas-dropdown__item-sub">Libro de movimientos · Excel</div>
+                                            </div>
+                                        </Link>
+
+                                        <Link href="/contabilidad" class="finanzas-dropdown__item" @click="finanzasAbierto = false">
+                                            <div class="finanzas-dropdown__icon" style="background: linear-gradient(135deg,#b45309,#d97706);">
+                                                <v-icon size="15" color="white">mdi-notebook-outline</v-icon>
+                                            </div>
+                                            <div>
+                                                <div class="finanzas-dropdown__item-title">Contabilidad</div>
+                                                <div class="finanzas-dropdown__item-sub">Reportes contables</div>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                </Transition>
+                            </div>
 
                             <!-- Menú de usuario -->
                             <Dropdown align="right" width="52">
@@ -188,6 +253,84 @@ const paletaAbierta             = ref(false);
     border-color: #a5b4fc;
     color: #6366f1;
 }
+
+/* ── Dropdown Finanzas ── */
+.finanzas-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #374151;
+    border-radius: 8px;
+    border: 1.5px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.finanzas-nav-btn:hover,
+.finanzas-nav-btn--active {
+    background: #f0f4ff;
+    border-color: #a5b4fc;
+    color: #4338ca;
+}
+.finanzas-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06);
+    z-index: 9999;
+    overflow: hidden;
+}
+.finanzas-dropdown__header {
+    padding: 10px 16px 6px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.finanzas-dropdown__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.12s;
+    cursor: pointer;
+}
+.finanzas-dropdown__item:hover {
+    background: #f8fafc;
+}
+.finanzas-dropdown__icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.finanzas-dropdown__item-title {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.2;
+}
+.finanzas-dropdown__item-sub {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+/* Animación */
+.dropdown-fade-enter-active,
+.dropdown-fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
+.dropdown-fade-enter-from,
+.dropdown-fade-leave-to { opacity: 0; transform: translateX(-50%) translateY(-6px); }
 
 /* ── Menú de usuario ── */
 .user-menu-btn {

@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 import { Head } from "@inertiajs/vue3";
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
@@ -25,6 +26,7 @@ onMounted(async () => {
 
 <template>
   <AuthenticatedLayout>
+    <ErpTopbar modulo="Inicio" titulo="Mi Panel de Trabajo" />
     <Head title="Mi Panel de Trabajo" />
     
     <div class="bg-gray-50 min-h-screen pb-10">

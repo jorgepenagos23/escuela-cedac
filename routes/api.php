@@ -80,6 +80,8 @@ Route::get('/v1/cuentadeposito/index/2024/numero', [CuentadePagoController::clas
 Route::post('/v1/pagosabonos/crear', [PagosController::class, 'store']);
 Route::post('/v1/inscripcion/crear', [InscripcionController::class, 'store']);
 Route::get('/v1/contabilidad/reporte', [PagosController::class, 'reporteContabilidad']);
+Route::get('/v1/pagos/conciliacion',        [PagosController::class, 'reporteConciliacion']);
+Route::get('/v1/dashboard/financiero',      [PagosController::class, 'dashboardFinanciero']);
 
 Route::get('v1/listar/alumnos/parapagos/', [InscripcionController::class, 'index2']);
 

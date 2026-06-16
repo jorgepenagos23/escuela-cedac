@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
@@ -145,6 +146,7 @@ const iconoGrupo = (grupo) => {
     <Head title="Roles y Permisos" />
 
     <AuthenticatedLayout>
+        <ErpTopbar modulo="Configuración" titulo="Roles y Permisos" />
         <template #header>
             <div class="flex items-center gap-3">
                 <v-icon color="deep-purple-darken-2" size="28">mdi-shield-account</v-icon>

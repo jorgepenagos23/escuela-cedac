@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, usePage } from "@inertiajs/vue3";
+import ErpTopbar from "@/Components/ErpTopbar.vue";
 import axios from 'axios';
 import swal from 'sweetalert';
 import { ref, computed, onMounted, watch } from 'vue';
@@ -404,6 +405,7 @@ const iconEstadoCuota = (estado) => {
     <Head title="Panel de Inscripciones" />
 
     <AuthenticatedLayout>
+        <ErpTopbar modulo="Inscripciones" titulo="Seguimiento de Inscripciones" />
         <template #header>
             <div class="flex justify-between items-center bg-transparent">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Módulo Corporativo de Admisiones</h2>
